@@ -1,10 +1,11 @@
-Microsoft (R) Macro Assembler Version 6.15.8803		    02/23/20 14:24:05
-Lab1.asm						     Page 1 - 1
+Microsoft (R) Macro Assembler Version 6.15.8803		    02/03/20 09:52:19
+flat_in_out.asm						     Page 1 - 1
 
 
-				.386
-				.model flat, stdcall
-				include masm32.inc 
+				    .386
+				    .model flat, stdcall
+				    option casemap :none
+				    include masm32.inc
 			      C comment * ллллллллллллллллллллллллллллллллллллллллллллллллллллллллллллллл
 			      C            Include file for procedures in the MASM32 library
 			      C           ллллллллллллллллллллллллллллллллллллллллллллллллллллллллллллллл *
@@ -244,7 +245,7 @@ Lab1.asm						     Page 1 - 1
 			      C 
 			      C 
 			      C 
-				include kernel32.inc 
+				    include kernel32.inc
 			      C   ; ===========================================
 			      C   ; kernel32.inc copyright MASM32 1998 - 2003
 			      C   ; ===========================================
@@ -1301,44 +1302,86 @@ Lab1.asm						     Page 1 - 1
 			      C 
 			      C lstrlenW PROTO :DWORD
 			      C 
-				includelib masm32.lib
-				includelib kernel32.lib
-
- 00000000			.const
- 00000000 45 6E 74 65 72	    enterStr db 'Enter line', 10, 13, 0
-	   20 6C 69 6E 65
-	   0A 0D 00
- 0000000D 50 72 65 73 73	    exitStr db 'Press someting to exit', 10, 13, 0
-	   20 73 6F 6D 65
-	   74 69 6E 67 20
-	   74 6F 20 65 78
+				    includelib masm32.lib
+				    includelib kernel32.lib
+ 00000000			    .const
+ 00000000 0D 0A 50 72 65		MsgExit db 13,10, 'Press Enter for exit',10,13,0
+	   73 73 20 45 6E
+	   74 65 72 20 66
+	   6F 72 20 65 78
 	   69 74 0A 0D 00
- 00000000			.data 
- 00000000  00000032 [		    MyStr dw 50 dup(?)
-	    0000
+ 00000019 0A 0D 48 65 6C		MsgIntr db 10,13, 'Hellow',10,13,0
+	   6C 6F 77 0A 0D
+	   00
+ 00000000			    .data 
+ 00000000 FFFA				b dw -6
+ 00000002 000B				d dw 11
+ 00000004 0000				x dw ?
+ 00000006 0000				fx dw 0 ; ёЄрЁ°хх ёыютю Ёхчєы№ЄрЄр
+ 00000008 0A 0D 49 6E 70		zapros db 10,13,'Input a = ',0
+	   75 74 20 61 20
+	   3D 20 00
+ 00000015 00000008 R			adr_zapros dd zapros
+ 00000019 52 65 73 75 6C		result db 'Result = '
+	   74 20 3D 20
+ 00000022  00000010 [			res_str db 16 dup(' '),0
+	    20
+	   ] 00
+
+				;     .data?
+ 00000033 0000				a dw ?
+ 00000035 0000				fa dw ? ; ёЄрЁ°хх ёыютю яхЁхьхээющ р
+ 00000037  0000000A [			buffer db 10 dup(?)
+	    00
 	   ]
- 00000064 00000000		    temp dd ?
- 00000068 2A 0A 0D 00		    cym db '*', 10, 13, 0
- 00000000			.code
+ 00000041  00000064 [			inbuf db 100 dup(?)
+	    00
+	   ]
+ 000000A5 00000041 R			adr_inbuf dd inbuf
+ 00000000			    .code
  00000000			    start:
-				    invoke StdOut, offset enterStr
-				    invoke StdIn, offset MyStr, 50
- 00000016  B9 00000000		    mov ECX, 0
- 0000001B  B9 00000000 E	    mov ECX, lstr
- 00000020			        cycle:
-				        invoke StdOut, offset cym
- 0000002A  E2 F4		        loop cycle 
-				    invoke StdOut, offset temp
-				    invoke StdIn, offset MyStr, 50
+ 00000000				invoke StdOut, offset MsgIntr
+				;	invoke StdOut, addr zapros
+					invoke StdOut, adr_zapros
 
-				    ;invoke StdOut, offset MyStr
+					invoke StdIn, addr buffer, lengthof buffer
+					invoke StripLF, addr buffer
 
-				    invoke StdOut, offset exitStr
-				    invoke StdIn, offset MyStr, 50
-				    invoke ExitProcess,0
-				end start
-Microsoft (R) Macro Assembler Version 6.15.8803		    02/23/20 14:24:05
-Lab1.asm						     Symbols 2 - 1
+					invoke atol, addr buffer
+ 00000035  A3 00000033 R		mov dword ptr a, eax
+
+ 0000003A  66| 8B 0D			mov cx,d
+	   00000002 R
+ 00000041  66| 83 C1 08			add cx,8 ; cx = d+8
+ 00000045  66| 8B 1D			mov bx,b
+	   00000000 R
+ 0000004C  66| 4B			dec bx	 ; bx = b-1
+ 0000004E  66| A1			mov ax,a
+	   00000033 R
+ 00000054  66| 03 05			add ax,d ; ax = a+d
+	   00000002 R
+ 0000005B  66| F7 EB			imul bx  ; dx:ax = (a+d)*(b-1)
+ 0000005E  66| F7 F9			idiv cx
+ 00000061  66| 99			cwd 
+ 00000063  66| A3			mov x,ax
+	   00000004 R
+ 00000069  66| 89 15			mov fx,dx
+	   00000006 R
+
+					invoke dwtoa, dword ptr x, addr res_str
+
+					invoke StdOut, addr result
+					invoke StdOut, addr res_str
+
+ 00000094  33 C0			xor eax,eax
+					invoke StdOut, addr MsgExit
+					invoke StdIn, addr inbuf, 100
+
+					invoke ExitProcess,0
+ 000000B3			    end start
+
+Microsoft (R) Macro Assembler Version 6.15.8803		    02/03/20 09:52:19
+flat_in_out.asm						     Symbols 2 - 1
 
 
 
@@ -1354,16 +1397,17 @@ Segments and Groups:
 
                 N a m e                 Size     Length   Align   Combine Class
 
-CONST  . . . . . . . . . . . . .	32 Bit	 00000026 DWord	  Public  'CONST'	 ReadOnly
+CONST  . . . . . . . . . . . . .	32 Bit	 00000024 DWord	  Public  'CONST'	 ReadOnly
 FLAT . . . . . . . . . . . . . .	GROUP
-_DATA  . . . . . . . . . . . . .	32 Bit	 0000006C DWord	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 0000005F DWord	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 000000A9 DWord	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000000B3 DWord	  Public  'CODE'	
 
 
 Procedures,  parameters and locals:
 
                 N a m e                 Type     Value    Attr
 
+$$$00001 . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000B3 Private STDCALL
 AboutBox . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 AddAtomA . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 AddAtomW . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -2320,7 +2364,8 @@ LoadLibrary  . . . . . . . . . .	Text   	 LoadLibraryA
 MoveFileEx . . . . . . . . . . .	Text   	 MoveFileExA
 MoveFileWithProgress . . . . . .	Text   	 MoveFileWithProgressA
 MoveFile . . . . . . . . . . . .	Text   	 MoveFileA
-MyStr  . . . . . . . . . . . . .	Word	 00000000 _DATA	
+MsgExit  . . . . . . . . . . . .	Byte	 00000000 CONST	
+MsgIntr  . . . . . . . . . . . .	Byte	 00000019 CONST	
 OpenEvent  . . . . . . . . . . .	Text   	 OpenEventA
 OpenFileMapping  . . . . . . . .	Text   	 OpenFileMappingA
 OpenJobObject  . . . . . . . . .	Text   	 OpenJobObjectA
@@ -2362,12 +2407,17 @@ WritePrivateProfileString  . . .	Text   	 WritePrivateProfileStringA
 WritePrivateProfileStruct  . . .	Text   	 WritePrivateProfileStructA
 WriteProfileSection  . . . . . .	Text   	 WriteProfileSectionA
 WriteProfileString . . . . . . .	Text   	 WriteProfileStringA
+adr_inbuf  . . . . . . . . . . .	DWord	 000000A5 _DATA	
+adr_zapros . . . . . . . . . . .	DWord	 00000015 _DATA	
+a  . . . . . . . . . . . . . . .	Word	 00000033 _DATA	
+buffer . . . . . . . . . . . . .	Byte	 00000037 _DATA	
+b  . . . . . . . . . . . . . . .	Word	 00000000 _DATA	
 cmpsi  . . . . . . . . . . . . .	Text   	 szCmpi
 cmpstr . . . . . . . . . . . . .	Text   	 szCmp
-cycle  . . . . . . . . . . . . .	L Near	 00000020 _TEXT	
-cym  . . . . . . . . . . . . . .	Byte	 00000068 _DATA	
-enterStr . . . . . . . . . . . .	Byte	 00000000 CONST	
-exitStr  . . . . . . . . . . . .	Byte	 0000000D CONST	
+d  . . . . . . . . . . . . . . .	Word	 00000002 _DATA	
+fa . . . . . . . . . . . . . . .	Word	 00000035 _DATA	
+fx . . . . . . . . . . . . . . .	Word	 00000006 _DATA	
+inbuf  . . . . . . . . . . . . .	Byte	 00000041 _DATA	
 lcase  . . . . . . . . . . . . .	Text   	 szLower
 lnstr  . . . . . . . . . . . . .	Text   	 szLen
 lstrcat  . . . . . . . . . . . .	Text   	 lstrcatA
@@ -2379,13 +2429,16 @@ lstrlen  . . . . . . . . . . . .	Text   	 lstrlenA
 lstr . . . . . . . . . . . . . .	Text   	 szLeft
 ltrim  . . . . . . . . . . . . .	Text   	 szLtrim
 midstr . . . . . . . . . . . . .	Text   	 szMid
+res_str  . . . . . . . . . . . .	Byte	 00000022 _DATA	
+result . . . . . . . . . . . . .	Byte	 00000019 _DATA	
 revstr . . . . . . . . . . . . .	Text   	 szRev
 rstr . . . . . . . . . . . . . .	Text   	 szRight
 rtrim  . . . . . . . . . . . . .	Text   	 szRtrim
 start  . . . . . . . . . . . . .	L Near	 00000000 _TEXT	Public STDCALL
-temp . . . . . . . . . . . . . .	DWord	 00000064 _DATA	
 trim . . . . . . . . . . . . . .	Text   	 szTrim
 ucase  . . . . . . . . . . . . .	Text   	 szUpper
+x  . . . . . . . . . . . . . . .	Word	 00000004 _DATA	
+zapros . . . . . . . . . . . . .	Byte	 00000008 _DATA	
 
 	   0 Warnings
 	   0 Errors

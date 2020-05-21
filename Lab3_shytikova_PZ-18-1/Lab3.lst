@@ -1,1344 +1,266 @@
-Microsoft (R) Macro Assembler Version 6.15.8803		    02/23/20 14:24:05
-Lab1.asm						     Page 1 - 1
+Microsoft (R) Macro Assembler Version 6.15.8803		    05/20/20 18:20:31
+Lab3.asm						     Page 1 - 1
 
 
 				.386
 				.model flat, stdcall
-				include masm32.inc 
-			      C comment * ���������������������������������������������������������������
-			      C            Include file for procedures in the MASM32 library
-			      C           ��������������������������������������������������������������� *
-			      C 
-			      C ; for both --> arg num, buffer
-			      C ArgCl  PROTO :DWORD,:DWORD   ; GUI mode version
-			      C ArgClC PROTO :DWORD,:DWORD   ; console mode version
-			      C GetCL PROTO :DWORD,:DWORD
-			      C 
-			      C Alloc       PROTO :DWORD
-			      C Free        PROTO :DWORD
-			      C 
-			      C comment * --------------------------
-			      C         numeric and text conversions
-			      C         ---------------------------- *
-			      C a2dw   PROTO :DWORD
-			      C atodw  PROTO :DWORD          ; return value in eax
-			      C htodw  PROTO :DWORD          ; return value in eax
-			      C dwtoa  PROTO :DWORD,:DWORD   ; value - buffer
-			      C dw2a   PROTO :DWORD,:DWORD
-			      C dw2hex PROTO :DWORD,:DWORD
-			      C dw2ah  PROTO :DWORD,:DWORD
-			      C 
-			      C GetErrDescription PROTO :DWORD
-			      C 
-			      C comment * -----------------------------------
-			      C         string and floating point conversions
-			      C         ------------------------------------- *
-			      C FloatToStr  proto stdcall fpin:QWORD, szDbl:PTR CHAR
-			      C FloatToStr2	proto	stdcall fpin:QWORD, szDbl:PTR CHAR
-			      C StrToFloat	proto	stdcall szIn:PTR BYTE, fpout:PTR DWORD
-			      C 
-			      C comment * ---------------
-			      C         search algorithms
-			      C         ----------------- *
-			      C InString  PROTO :DWORD,:DWORD,:DWORD ; StartPos - lpszString - lpszSubStr
-			      C BinSearch PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD      ; classic scanner
-			      C 
-			      C ; Boyer Moore based algorithms
-			      C ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			      C BMBinSearch  PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD   ; complete BM
-			      C BMHBinsearch PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD   ; horspool variation
-			      C SBMBinSearch PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD   ; simplified version
-			      C WordCount    PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C 
-			      C comment * ---------------------------
-			      C         encryption algorithms for
-			      C         "one shot" or "one pass" pads
-			      C         ----------------------------- *
-			      C XorData PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C RolData PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C RorData PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C 
-			      C StrLen PROTO :DWORD ; Agner Fog's high speed string length algo
-			      C 
-			      C comment * ------------------------------------
-			      C         zero terminated string procedures have
-			      C         been renamed for consistency. Equates
-			      C         to the old names are below.
-			      C         -------------------------------------- *
-			      C 
-			      C     szappend    PROTO :DWORD,:DWORD,:DWORD
-			      C     szCatStr    PROTO :DWORD,:DWORD
-			      C     szCmp       PROTO :DWORD,:DWORD
-			      C     szCmpi      PROTO :DWORD,:DWORD,:DWORD
-			      C     szCopy      PROTO :DWORD,:DWORD
-			      C     szLeft      PROTO :DWORD,:DWORD,:DWORD
-			      C     szLen       PROTO :DWORD
-			      C     szLower     PROTO :DWORD
-			      C     szLtrim     PROTO :DWORD,:DWORD
-			      C     szMid       PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C     szMultiCat  PROTO C :DWORD,:DWORD,:VARARG
-			      C     szRemove    PROTO :DWORD,:DWORD,:DWORD
-			      C     szRev       PROTO :DWORD,:DWORD
-			      C     szRight     PROTO :DWORD,:DWORD,:DWORD
-			      C     szRtrim     PROTO :DWORD,:DWORD
-			      C     szTrim      PROTO :DWORD
-			      C     szUpper     PROTO :DWORD
-			      C 
-			      C comment * ---------------------------------
-			      C         the equates for the old names must
-			      C         be put after the prototypes for the
-			      C         procedures they are mapped to.
-			      C         ----------------------------------- *
-			      C 
- = szLen		      C     lnstr   equ <szLen>
- = szCmp		      C     cmpstr  equ <szCmp>
- = szCmpi		      C     cmpsi   equ <szCmpi>
- = szRev		      C     revstr  equ <szRev>
- = szLower		      C     lcase   equ <szLower>
- = szUpper		      C     ucase   equ <szUpper>
- = szLtrim		      C     ltrim   equ <szLtrim>
- = szRtrim		      C     rtrim   equ <szRtrim>
- = szTrim		      C     trim    equ <szTrim>
- = szLeft		      C     lstr    equ <szLeft>
- = szRight		      C     rstr    equ <szRight>
- = szMid		      C     midstr  equ <szMid>
-			      C ; -----------------------------------------
-			      C 
-			      C shell PROTO :DWORD
-			      C 
-			      C StripRangeI PROTO :DWORD,:DWORD,:BYTE,:BYTE
-			      C StripRangeX PROTO :DWORD,:DWORD,:BYTE,:BYTE
-			      C 
-			      C MemCopy PROTO :DWORD,:DWORD,:DWORD  ; source - dest - length
-			      C memfill PROTO :DWORD,:DWORD,:DWORD
-			      C 
-			      C GetAppPath   PROTO :DWORD     ; buffer has app path
-			      C NameFromPath PROTO :DWORD,:DWORD
-			      C GetPathOnly  PROTO :DWORD,:DWORD
-			      C 
-			      C exist       PROTO :DWORD
-			      C filesize    PROTO :DWORD
-			      C 
-			      C FrameCtrl   PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C FrameWindow PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C FrameGrp    PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C 
-			      C Frame3D PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C line    PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C circle  PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C 
-			      C DisplayBmp   PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C DisplayIcon  PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C VerticalTile PROTO :DWORD,:DWORD,:DWORD
-			      C SetBMcolor   PROTO :DWORD,:DWORD
-			      C 
-			      C BmpButton    PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C 
-			      C StdOut       PROTO :DWORD
-			      C StdIn        PROTO :DWORD,:DWORD
-			      C locate       PROTO :DWORD,:DWORD
-			      C ClearScreen  PROTO
-			      C StripLF      PROTO :DWORD
-			      C 
-			      C BrowseForFolder PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C FontDialog      PROTO :DWORD,:DWORD,:DWORD
-			      C ColorDialog     PROTO :DWORD,:DWORD,:DWORD
-			      C PageSetupDialog PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C PrintDialog     PROTO :DWORD,:DWORD,:DWORD
-			      C 
-			      C Read_File_In    PROTO :DWORD,:DWORD
-			      C ofCallBack      PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C Write_To_Disk   PROTO :DWORD,:DWORD
-			      C sfCallBack      PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C RichEd1         PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C RichEd2         PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C 
-			      C GetPercent      PROTO :DWORD,:DWORD
-			      C IntMul          PROTO :DWORD,:DWORD
-			      C IntDiv          PROTO :DWORD,:DWORD
-			      C IntSqrt         PROTO :DWORD
-			      C 
-			      C nrandom         PROTO :DWORD
-			      C nseed           PROTO :DWORD
-			      C 
-			      C ; ---------------------------------
-			      C ; prototypes for pre-built dialogs
-			      C ; ---------------------------------
-			      C GetTextInput    PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C AboutBox        PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetFile         PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C LoadList        PROTO :DWORD,:DWORD
-			      C IPtoString      PROTO :DWORD,:DWORD
-			      C GetIP           PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C 
-			      C     MakeIP MACRO val1,val2,val3,val4
-			      C         mov ah, val1
-			      C         mov al, val2
-			      C         rol eax, 16
-			      C         mov ah, val3
-			      C         mov al, val4
-			      C       EXITM <eax>
-			      C     ENDM
-			      C 
-			      C ; ----------------------------------------
-			      C ; Ernie Murphy's image loading procedures
-			      C ; ----------------------------------------
-			      C BitmapFromFile      PROTO :DWORD
-			      C BitmapFromMemory    PROTO :DWORD,:DWORD
-			      C BitmapFromResource  PROTO :DWORD,:DWORD
-			      C 
-			      C ; -------------------
-			      C ; file IO procedures
-			      C ; -------------------
-			      C read_disk_file  PROTO :DWORD,:DWORD,:DWORD
-			      C write_disk_file PROTO :DWORD,:DWORD,:DWORD
-			      C 
-			      C ; ------------------------------
-			      C ; memory mapped file procedures
-			      C ; ------------------------------
-			      C CloseMMF  PROTO :DWORD,:DWORD
-			      C CreateMMF PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C 
-			      C ; ----------------
-			      C ; sort procedures
-			      C ; ----------------
-			      C nrQsortA PROTO :DWORD,:DWORD
-			      C nrQsortD PROTO :DWORD,:DWORD
-			      C 
-			      C CombSortA PROTO :DWORD,:DWORD
-			      C CombSortD PROTO :DWORD,:DWORD
-			      C 
-			      C testreg PROTO
-			      C 
-			      C HexDump   PROTO :DWORD,:DWORD,:DWORD
-			      C AsciiDump PROTO :DWORD,:DWORD,:DWORD
-			      C 
-			      C ; ------------------------------------------
-			      C ; ascii and 32 bit long integer conversions
-			      C ; ------------------------------------------
-			      C atol PROTO :DWORD
-			      C ltoa PROTO :DWORD,:DWORD
-			      C 
-			      C ; ----------------------------
-			      C ; File open and close dialogs
-			      C ; ----------------------------
-			      C OpenFileDialog PROTO :DWORD, :DWORD, :DWORD, :DWORD
-			      C SaveFileDialog PROTO :DWORD, :DWORD, :DWORD, :DWORD
-			      C 
-			      C a2wc        PROTO :DWORD
-			      C 
-			      C ; ----------------
-			      C ; array procedures
-			      C ; ----------------
-			      C arr_add         PROTO :DWORD,:DWORD,:DWORD
-			      C arr_mul         PROTO :DWORD,:DWORD,:DWORD
-			      C arr_sub         PROTO :DWORD,:DWORD,:DWORD
-			      C create_array    PROTO :DWORD,:DWORD
-			      C 
-			      C byte_count  PROTO :DWORD,:DWORD,:DWORD
-			      C 
-			      C load_drives PROTO :DWORD
-			      C 
-			      C udw2str PROTO :DWORD,:DWORD
-			      C ustr2dw PROTO :DWORD
-			      C 
-			      C 
-			      C 
-				include kernel32.inc 
-			      C   ; ===========================================
-			      C   ; kernel32.inc copyright MASM32 1998 - 2003
-			      C   ; ===========================================
-			      C 
-			      C AddAtomA PROTO :DWORD
- = AddAtomA		      C AddAtom equ <AddAtomA>
-			      C 
-			      C AddAtomW PROTO :DWORD
-			      C AllocConsole PROTO 
-			      C AllocateUserPhysicalPages PROTO :DWORD,:DWORD,:DWORD
-			      C AreFileApisANSI PROTO 
-			      C AssignProcessToJobObject PROTO :DWORD,:DWORD
-			      C BackupRead PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C BackupSeek PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C BackupWrite PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C Beep PROTO :DWORD,:DWORD
-			      C BeginUpdateResourceA PROTO :DWORD,:DWORD
- = BeginUpdateResourceA	      C BeginUpdateResource equ <BeginUpdateResourceA>
-			      C 
-			      C BeginUpdateResourceW PROTO :DWORD,:DWORD
-			      C BindIoCompletionCallback PROTO :DWORD,:DWORD,:DWORD
-			      C BuildCommDCBA PROTO :DWORD,:DWORD
- = BuildCommDCBA	      C BuildCommDCB equ <BuildCommDCBA>
-			      C 
-			      C BuildCommDCBAndTimeoutsA PROTO :DWORD,:DWORD,:DWORD
- = BuildCommDCBAndTimeoutsA   C BuildCommDCBAndTimeouts equ <BuildCommDCBAndTimeoutsA>
-			      C 
-			      C BuildCommDCBAndTimeoutsW PROTO :DWORD,:DWORD,:DWORD
-			      C BuildCommDCBW PROTO :DWORD,:DWORD
-			      C CallNamedPipeA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = CallNamedPipeA	      C CallNamedPipe equ <CallNamedPipeA>
-			      C 
-			      C CallNamedPipeW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C CancelDeviceWakeupRequest PROTO :DWORD
-			      C CancelIo PROTO :DWORD
-			      C CancelTimerQueueTimer PROTO :DWORD,:DWORD
-			      C CancelWaitableTimer PROTO :DWORD
-			      C ChangeTimerQueueTimer PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C ClearCommBreak PROTO :DWORD
-			      C ClearCommError PROTO :DWORD,:DWORD,:DWORD
-			      C CloseHandle PROTO :DWORD
-			      C CommConfigDialogA PROTO :DWORD,:DWORD,:DWORD
- = CommConfigDialogA	      C CommConfigDialog equ <CommConfigDialogA>
-			      C 
-			      C CommConfigDialogW PROTO :DWORD,:DWORD,:DWORD
-			      C CompareFileTime PROTO :DWORD,:DWORD
-			      C CompareStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = CompareStringA	      C CompareString equ <CompareStringA>
-			      C 
-			      C CompareStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C ConnectNamedPipe PROTO :DWORD,:DWORD
-			      C ContinueDebugEvent PROTO :DWORD,:DWORD,:DWORD
-			      C ConvertDefaultLocale PROTO :DWORD
-			      C ConvertThreadToFiber PROTO :DWORD
-			      C CopyFileA PROTO :DWORD,:DWORD,:DWORD
- = CopyFileA		      C CopyFile equ <CopyFileA>
-			      C 
-			      C CopyFileExA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = CopyFileExA		      C CopyFileEx equ <CopyFileExA>
-			      C 
-			      C CopyFileExW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C CopyFileW PROTO :DWORD,:DWORD,:DWORD
-			      C CreateConsoleScreenBuffer PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateDirectoryA PROTO :DWORD,:DWORD
- = CreateDirectoryA	      C CreateDirectory equ <CreateDirectoryA>
-			      C 
-			      C CreateDirectoryExA PROTO :DWORD,:DWORD,:DWORD
- = CreateDirectoryExA	      C CreateDirectoryEx equ <CreateDirectoryExA>
-			      C 
-			      C CreateDirectoryExW PROTO :DWORD,:DWORD,:DWORD
-			      C CreateDirectoryW PROTO :DWORD,:DWORD
-			      C CreateEventA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = CreateEventA		      C CreateEvent equ <CreateEventA>
-			      C 
-			      C CreateEventW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateFiber PROTO :DWORD,:DWORD,:DWORD
-			      C CreateFileA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = CreateFileA		      C CreateFile equ <CreateFileA>
-			      C 
-			      C CreateFileMappingA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = CreateFileMappingA	      C CreateFileMapping equ <CreateFileMappingA>
-			      C 
-			      C CreateFileMappingW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateFileW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateHardLinkA PROTO :DWORD,:DWORD,:DWORD
- = CreateHardLinkA	      C CreateHardLink equ <CreateHardLinkA>
-			      C 
-			      C CreateHardLinkW PROTO :DWORD,:DWORD,:DWORD
-			      C CreateIoCompletionPort PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateJobObjectA PROTO :DWORD,:DWORD
- = CreateJobObjectA	      C CreateJobObject equ <CreateJobObjectA>
-			      C 
-			      C CreateJobObjectW PROTO :DWORD,:DWORD
-			      C CreateMailslotA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = CreateMailslotA	      C CreateMailslot equ <CreateMailslotA>
-			      C 
-			      C CreateMailslotW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateMutexA PROTO :DWORD,:DWORD,:DWORD
- = CreateMutexA		      C CreateMutex equ <CreateMutexA>
-			      C 
-			      C CreateMutexW PROTO :DWORD,:DWORD,:DWORD
-			      C CreateNamedPipeA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = CreateNamedPipeA	      C CreateNamedPipe equ <CreateNamedPipeA>
-			      C 
-			      C CreateNamedPipeW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C CreatePipe PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateProcessA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = CreateProcessA	      C CreateProcess equ <CreateProcessA>
-			      C 
-			      C CreateProcessW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateRemoteThread PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateSemaphoreA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = CreateSemaphoreA	      C CreateSemaphore equ <CreateSemaphoreA>
-			      C 
-			      C CreateSemaphoreW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateTapePartition PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateThread PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateTimerQueue PROTO 
-			      C CreateTimerQueueTimer PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C CreateToolhelp32Snapshot PROTO :DWORD,:DWORD
-			      C CreateWaitableTimerA PROTO :DWORD,:DWORD,:DWORD
- = CreateWaitableTimerA	      C CreateWaitableTimer equ <CreateWaitableTimerA>
-			      C 
-			      C CreateWaitableTimerW PROTO :DWORD,:DWORD,:DWORD
-			      C DebugActiveProcess PROTO :DWORD
-			      C DebugBreak PROTO 
-			      C DefineDosDeviceA PROTO :DWORD,:DWORD,:DWORD
- = DefineDosDeviceA	      C DefineDosDevice equ <DefineDosDeviceA>
-			      C 
-			      C DefineDosDeviceW PROTO :DWORD,:DWORD,:DWORD
-			      C DeleteAtom PROTO :DWORD
-			      C DeleteCriticalSection PROTO :DWORD
-			      C DeleteFiber PROTO :DWORD
-			      C DeleteFileA PROTO :DWORD
- = DeleteFileA		      C DeleteFile equ <DeleteFileA>
-			      C 
-			      C DeleteFileW PROTO :DWORD
-			      C DeleteTimerQueue PROTO :DWORD
-			      C DeleteTimerQueueEx PROTO :DWORD,:DWORD
-			      C DeleteTimerQueueTimer PROTO :DWORD,:DWORD,:DWORD
-			      C DeleteVolumeMountPointA PROTO :DWORD
- = DeleteVolumeMountPointA    C DeleteVolumeMountPoint equ <DeleteVolumeMountPointA>
-			      C 
-			      C DeleteVolumeMountPointW PROTO :DWORD
-			      C DeviceIoControl PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C DisableThreadLibraryCalls PROTO :DWORD
-			      C DisconnectNamedPipe PROTO :DWORD
-			      C DnsHostnameToComputerNameA PROTO :DWORD,:DWORD,:DWORD
- = DnsHostnameToComputerNam   C DnsHostnameToComputerName equ <DnsHostnameToComputerNameA>
-   eA
-			      C 
-			      C DnsHostnameToComputerNameW PROTO :DWORD,:DWORD,:DWORD
-			      C DosDateTimeToFileTime PROTO :DWORD,:DWORD,:DWORD
-			      C DuplicateHandle PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C EndUpdateResourceA PROTO :DWORD,:DWORD
- = EndUpdateResourceA	      C EndUpdateResource equ <EndUpdateResourceA>
-			      C 
-			      C EndUpdateResourceW PROTO :DWORD,:DWORD
-			      C EnterCriticalSection PROTO :DWORD
-			      C EnumCalendarInfoA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = EnumCalendarInfoA	      C EnumCalendarInfo equ <EnumCalendarInfoA>
-			      C 
-			      C EnumCalendarInfoExA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = EnumCalendarInfoExA	      C EnumCalendarInfoEx equ <EnumCalendarInfoExA>
-			      C 
-			      C EnumCalendarInfoExW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C EnumCalendarInfoW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C EnumDateFormatsA PROTO :DWORD,:DWORD,:DWORD
- = EnumDateFormatsA	      C EnumDateFormats equ <EnumDateFormatsA>
-			      C 
-			      C EnumDateFormatsExA PROTO :DWORD,:DWORD,:DWORD
- = EnumDateFormatsExA	      C EnumDateFormatsEx equ <EnumDateFormatsExA>
-			      C 
-			      C EnumDateFormatsExW PROTO :DWORD,:DWORD,:DWORD
-			      C EnumDateFormatsW PROTO :DWORD,:DWORD,:DWORD
-			      C EnumLanguageGroupLocalesA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = EnumLanguageGroupLocales   C EnumLanguageGroupLocales equ <EnumLanguageGroupLocalesA>
-   A
-			      C 
-			      C EnumLanguageGroupLocalesW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C EnumResourceLanguagesA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = EnumResourceLanguagesA     C EnumResourceLanguages equ <EnumResourceLanguagesA>
-			      C 
-			      C EnumResourceLanguagesW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C EnumResourceNamesA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = EnumResourceNamesA	      C EnumResourceNames equ <EnumResourceNamesA>
-			      C 
-			      C EnumResourceNamesW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C EnumResourceTypesA PROTO :DWORD,:DWORD,:DWORD
- = EnumResourceTypesA	      C EnumResourceTypes equ <EnumResourceTypesA>
-			      C 
-			      C EnumResourceTypesW PROTO :DWORD,:DWORD,:DWORD
-			      C EnumSystemCodePagesA PROTO :DWORD,:DWORD
- = EnumSystemCodePagesA	      C EnumSystemCodePages equ <EnumSystemCodePagesA>
-			      C 
-			      C EnumSystemCodePagesW PROTO :DWORD,:DWORD
-			      C EnumSystemLanguageGroupsA PROTO :DWORD,:DWORD,:DWORD
- = EnumSystemLanguageGroups   C EnumSystemLanguageGroups equ <EnumSystemLanguageGroupsA>
-   A
-			      C 
-			      C EnumSystemLanguageGroupsW PROTO :DWORD,:DWORD,:DWORD
-			      C EnumSystemLocalesA PROTO :DWORD,:DWORD
- = EnumSystemLocalesA	      C EnumSystemLocales equ <EnumSystemLocalesA>
-			      C 
-			      C EnumSystemLocalesW PROTO :DWORD,:DWORD
-			      C EnumTimeFormatsA PROTO :DWORD,:DWORD,:DWORD
- = EnumTimeFormatsA	      C EnumTimeFormats equ <EnumTimeFormatsA>
-			      C 
-			      C EnumTimeFormatsW PROTO :DWORD,:DWORD,:DWORD
-			      C EnumUILanguagesA PROTO :DWORD,:DWORD,:DWORD
- = EnumUILanguagesA	      C EnumUILanguages equ <EnumUILanguagesA>
-			      C 
-			      C EnumUILanguagesW PROTO :DWORD,:DWORD,:DWORD
-			      C EraseTape PROTO :DWORD,:DWORD,:DWORD
-			      C EscapeCommFunction PROTO :DWORD,:DWORD
-			      C ExitProcess PROTO :DWORD
-			      C ExitThread PROTO :DWORD
-			      C ExpandEnvironmentStringsA PROTO :DWORD,:DWORD,:DWORD
- = ExpandEnvironmentStrings   C ExpandEnvironmentStrings equ <ExpandEnvironmentStringsA>
-   A
-			      C 
-			      C ExpandEnvironmentStringsW PROTO :DWORD,:DWORD,:DWORD
-			      C FatalAppExitA PROTO :DWORD,:DWORD
- = FatalAppExitA	      C FatalAppExit equ <FatalAppExitA>
-			      C 
-			      C FatalAppExitW PROTO :DWORD,:DWORD
-			      C FatalExit PROTO :DWORD
-			      C FileTimeToDosDateTime PROTO :DWORD,:DWORD,:DWORD
-			      C FileTimeToLocalFileTime PROTO :DWORD,:DWORD
-			      C FileTimeToSystemTime PROTO :DWORD,:DWORD
-			      C FillConsoleOutputAttribute PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C FillConsoleOutputCharacterA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = FillConsoleOutputCharact   C FillConsoleOutputCharacter equ <FillConsoleOutputCharacterA>
-   erA
-			      C 
-			      C FillConsoleOutputCharacterW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C FindAtomA PROTO :DWORD
- = FindAtomA		      C FindAtom equ <FindAtomA>
-			      C 
-			      C FindAtomW PROTO :DWORD
-			      C FindClose PROTO :DWORD
-			      C FindCloseChangeNotification PROTO :DWORD
-			      C FindFirstChangeNotificationA PROTO :DWORD,:DWORD,:DWORD
- = FindFirstChangeNotificat   C FindFirstChangeNotification equ <FindFirstChangeNotificationA>
-   ionA
-			      C 
-			      C FindFirstChangeNotificationW PROTO :DWORD,:DWORD,:DWORD
-			      C FindFirstFileA PROTO :DWORD,:DWORD
- = FindFirstFileA	      C FindFirstFile equ <FindFirstFileA>
-			      C 
-			      C FindFirstFileExA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = FindFirstFileExA	      C FindFirstFileEx equ <FindFirstFileExA>
-			      C 
-			      C FindFirstFileExW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C FindFirstFileW PROTO :DWORD,:DWORD
-			      C FindFirstVolumeA PROTO :DWORD,:DWORD
- = FindFirstVolumeA	      C FindFirstVolume equ <FindFirstVolumeA>
-			      C 
-			      C FindFirstVolumeMountPointA PROTO :DWORD,:DWORD,:DWORD
- = FindFirstVolumeMountPoin   C FindFirstVolumeMountPoint equ <FindFirstVolumeMountPointA>
-   tA
-			      C 
-			      C FindFirstVolumeMountPointW PROTO :DWORD,:DWORD,:DWORD
-			      C FindFirstVolumeW PROTO :DWORD,:DWORD
-			      C FindNextChangeNotification PROTO :DWORD
-			      C FindNextFileA PROTO :DWORD,:DWORD
- = FindNextFileA	      C FindNextFile equ <FindNextFileA>
-			      C 
-			      C FindNextFileW PROTO :DWORD,:DWORD
-			      C FindNextVolumeA PROTO :DWORD,:DWORD,:DWORD
- = FindNextVolumeA	      C FindNextVolume equ <FindNextVolumeA>
-			      C 
-			      C FindNextVolumeMountPointA PROTO :DWORD,:DWORD,:DWORD
- = FindNextVolumeMountPoint   C FindNextVolumeMountPoint equ <FindNextVolumeMountPointA>
-   A
-			      C 
-			      C FindNextVolumeMountPointW PROTO :DWORD,:DWORD,:DWORD
-			      C FindNextVolumeW PROTO :DWORD,:DWORD,:DWORD
-			      C FindResourceA PROTO :DWORD,:DWORD,:DWORD
- = FindResourceA	      C FindResource equ <FindResourceA>
-			      C 
-			      C FindResourceExA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = FindResourceExA	      C FindResourceEx equ <FindResourceExA>
-			      C 
-			      C FindResourceExW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C FindResourceW PROTO :DWORD,:DWORD,:DWORD
-			      C FindVolumeClose PROTO :DWORD
-			      C FindVolumeMountPointClose PROTO :DWORD
-			      C FlushConsoleInputBuffer PROTO :DWORD
-			      C FlushFileBuffers PROTO :DWORD
-			      C FlushInstructionCache PROTO :DWORD,:DWORD,:DWORD
-			      C FlushViewOfFile PROTO :DWORD,:DWORD
-			      C FoldStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = FoldStringA		      C FoldString equ <FoldStringA>
-			      C 
-			      C FoldStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C FormatMessageA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = FormatMessageA	      C FormatMessage equ <FormatMessageA>
-			      C 
-			      C FormatMessageW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C FreeConsole PROTO 
-			      C FreeEnvironmentStringsA PROTO :DWORD
- = FreeEnvironmentStringsA    C FreeEnvironmentStrings equ <FreeEnvironmentStringsA>
-			      C 
-			      C FreeEnvironmentStringsW PROTO :DWORD
-			      C FreeLibrary PROTO :DWORD
-			      C FreeLibraryAndExitThread PROTO :DWORD,:DWORD
-			      C FreeResource PROTO :DWORD
-			      C FreeUserPhysicalPages PROTO :DWORD,:DWORD,:DWORD
-			      C GenerateConsoleCtrlEvent PROTO :DWORD,:DWORD
-			      C GetACP PROTO 
-			      C GetAtomNameA PROTO :DWORD,:DWORD,:DWORD
- = GetAtomNameA		      C GetAtomName equ <GetAtomNameA>
-			      C 
-			      C GetAtomNameW PROTO :DWORD,:DWORD,:DWORD
-			      C GetBinaryTypeA PROTO :DWORD,:DWORD
- = GetBinaryTypeA	      C GetBinaryType equ <GetBinaryTypeA>
-			      C 
-			      C GetBinaryTypeW PROTO :DWORD,:DWORD
-			      C GetCPInfo PROTO :DWORD,:DWORD
-			      C GetCPInfoExA PROTO :DWORD,:DWORD,:DWORD
- = GetCPInfoExA		      C GetCPInfoEx equ <GetCPInfoExA>
-			      C 
-			      C GetCPInfoExW PROTO :DWORD,:DWORD,:DWORD
-			      C GetCalendarInfoA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetCalendarInfoA	      C GetCalendarInfo equ <GetCalendarInfoA>
-			      C 
-			      C GetCalendarInfoW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetCommConfig PROTO :DWORD,:DWORD,:DWORD
-			      C GetCommMask PROTO :DWORD,:DWORD
-			      C GetCommModemStatus PROTO :DWORD,:DWORD
-			      C GetCommProperties PROTO :DWORD,:DWORD
-			      C GetCommState PROTO :DWORD,:DWORD
-			      C GetCommTimeouts PROTO :DWORD,:DWORD
-			      C GetCommandLineA PROTO 
- = GetCommandLineA	      C GetCommandLine equ <GetCommandLineA>
-			      C 
-			      C GetCommandLineW PROTO 
-			      C GetCompressedFileSizeA PROTO :DWORD,:DWORD
- = GetCompressedFileSizeA     C GetCompressedFileSize equ <GetCompressedFileSizeA>
-			      C 
-			      C GetCompressedFileSizeW PROTO :DWORD,:DWORD
-			      C GetComputerNameA PROTO :DWORD,:DWORD
- = GetComputerNameA	      C GetComputerName equ <GetComputerNameA>
-			      C 
-			      C GetComputerNameExA PROTO :DWORD,:DWORD,:DWORD
- = GetComputerNameExA	      C GetComputerNameEx equ <GetComputerNameExA>
-			      C 
-			      C GetComputerNameExW PROTO :DWORD,:DWORD,:DWORD
-			      C GetComputerNameW PROTO :DWORD,:DWORD
-			      C GetConsoleCP PROTO 
-			      C GetConsoleCursorInfo PROTO :DWORD,:DWORD
-			      C GetConsoleMode PROTO :DWORD,:DWORD
-			      C GetConsoleOutputCP PROTO 
-			      C GetConsoleScreenBufferInfo PROTO :DWORD,:DWORD
-			      C GetConsoleTitleA PROTO :DWORD,:DWORD
- = GetConsoleTitleA	      C GetConsoleTitle equ <GetConsoleTitleA>
-			      C 
-			      C GetConsoleTitleW PROTO :DWORD,:DWORD
-			      C GetCurrencyFormatA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetCurrencyFormatA	      C GetCurrencyFormat equ <GetCurrencyFormatA>
-			      C 
-			      C GetCurrencyFormatW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetCurrentDirectoryA PROTO :DWORD,:DWORD
- = GetCurrentDirectoryA	      C GetCurrentDirectory equ <GetCurrentDirectoryA>
-			      C 
-			      C GetCurrentDirectoryW PROTO :DWORD,:DWORD
-			      C GetCurrentProcess PROTO 
-			      C GetCurrentProcessId PROTO 
-			      C GetCurrentThread PROTO 
-			      C GetCurrentThreadId PROTO 
-			      C GetDateFormatA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetDateFormatA	      C GetDateFormat equ <GetDateFormatA>
-			      C 
-			      C GetDateFormatW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetDefaultCommConfigA PROTO :DWORD,:DWORD,:DWORD
- = GetDefaultCommConfigA      C GetDefaultCommConfig equ <GetDefaultCommConfigA>
-			      C 
-			      C GetDefaultCommConfigW PROTO :DWORD,:DWORD,:DWORD
-			      C GetDevicePowerState PROTO :DWORD,:DWORD
-			      C GetDiskFreeSpaceA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetDiskFreeSpaceA	      C GetDiskFreeSpace equ <GetDiskFreeSpaceA>
-			      C 
-			      C GetDiskFreeSpaceExA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = GetDiskFreeSpaceExA	      C GetDiskFreeSpaceEx equ <GetDiskFreeSpaceExA>
-			      C 
-			      C GetDiskFreeSpaceExW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C GetDiskFreeSpaceW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetDriveTypeA PROTO :DWORD
- = GetDriveTypeA	      C GetDriveType equ <GetDriveTypeA>
-			      C 
-			      C GetDriveTypeW PROTO :DWORD
-			      C GetEnvironmentStringsA PROTO 
- = GetEnvironmentStringsA     C GetEnvironmentStrings equ <GetEnvironmentStringsA>
-			      C 
-			      C GetEnvironmentStringsW PROTO 
-			      C GetEnvironmentVariableA PROTO :DWORD,:DWORD,:DWORD
- = GetEnvironmentVariableA    C GetEnvironmentVariable equ <GetEnvironmentVariableA>
-			      C 
-			      C GetEnvironmentVariableW PROTO :DWORD,:DWORD,:DWORD
-			      C GetExitCodeProcess PROTO :DWORD,:DWORD
-			      C GetExitCodeThread PROTO :DWORD,:DWORD
-			      C GetFileAttributesA PROTO :DWORD
- = GetFileAttributesA	      C GetFileAttributes equ <GetFileAttributesA>
-			      C 
-			      C GetFileAttributesExA PROTO :DWORD,:DWORD,:DWORD
- = GetFileAttributesExA	      C GetFileAttributesEx equ <GetFileAttributesExA>
-			      C 
-			      C GetFileAttributesExW PROTO :DWORD,:DWORD,:DWORD
-			      C GetFileAttributesW PROTO :DWORD
-			      C GetFileInformationByHandle PROTO :DWORD,:DWORD
-			      C GetFileSize PROTO :DWORD,:DWORD
-			      C GetFileSizeEx PROTO :DWORD,:DWORD
-			      C GetFileTime PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C GetFileType PROTO :DWORD
-			      C GetFullPathNameA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = GetFullPathNameA	      C GetFullPathName equ <GetFullPathNameA>
-			      C 
-			      C GetFullPathNameW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C GetHandleInformation PROTO :DWORD,:DWORD
-			      C GetLargestConsoleWindowSize PROTO :DWORD
-			      C GetLastError PROTO 
-			      C GetLocalTime PROTO :DWORD
-			      C GetLocaleInfoA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = GetLocaleInfoA	      C GetLocaleInfo equ <GetLocaleInfoA>
-			      C 
-			      C GetLocaleInfoW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C GetLogicalDriveStringsA PROTO :DWORD,:DWORD
- = GetLogicalDriveStringsA    C GetLogicalDriveStrings equ <GetLogicalDriveStringsA>
-			      C 
-			      C GetLogicalDriveStringsW PROTO :DWORD,:DWORD
-			      C GetLogicalDrives PROTO 
-			      C GetLongPathNameA PROTO :DWORD,:DWORD,:DWORD
- = GetLongPathNameA	      C GetLongPathName equ <GetLongPathNameA>
-			      C 
-			      C GetLongPathNameW PROTO :DWORD,:DWORD,:DWORD
-			      C GetMailslotInfo PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetModuleFileNameA PROTO :DWORD,:DWORD,:DWORD
- = GetModuleFileNameA	      C GetModuleFileName equ <GetModuleFileNameA>
-			      C 
-			      C GetModuleFileNameW PROTO :DWORD,:DWORD,:DWORD
-			      C GetModuleHandleA PROTO :DWORD
- = GetModuleHandleA	      C GetModuleHandle equ <GetModuleHandleA>
-			      C 
-			      C GetModuleHandleW PROTO :DWORD
-			      C GetNamedPipeHandleStateA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetNamedPipeHandleStateA   C GetNamedPipeHandleState equ <GetNamedPipeHandleStateA>
-			      C 
-			      C GetNamedPipeHandleStateW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetNamedPipeInfo PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetNumberFormatA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetNumberFormatA	      C GetNumberFormat equ <GetNumberFormatA>
-			      C 
-			      C GetNumberFormatW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetNumberOfConsoleInputEvents PROTO :DWORD,:DWORD
-			      C GetNumberOfConsoleMouseButtons PROTO :DWORD
-			      C GetOEMCP PROTO 
-			      C GetOverlappedResult PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C GetPriorityClass PROTO :DWORD
-			      C GetPrivateProfileIntA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = GetPrivateProfileIntA      C GetPrivateProfileInt equ <GetPrivateProfileIntA>
-			      C 
-			      C GetPrivateProfileIntW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C GetPrivateProfileSectionA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = GetPrivateProfileSection   C GetPrivateProfileSection equ <GetPrivateProfileSectionA>
-   A
-			      C 
-			      C GetPrivateProfileSectionNamesA PROTO :DWORD,:DWORD,:DWORD
- = GetPrivateProfileSection   C GetPrivateProfileSectionNames equ <GetPrivateProfileSectionNamesA>
-   NamesA
-			      C 
-			      C GetPrivateProfileSectionNamesW PROTO :DWORD,:DWORD,:DWORD
-			      C GetPrivateProfileSectionW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C GetPrivateProfileStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetPrivateProfileStringA   C GetPrivateProfileString equ <GetPrivateProfileStringA>
-			      C 
-			      C GetPrivateProfileStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetPrivateProfileStructA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetPrivateProfileStructA   C GetPrivateProfileStruct equ <GetPrivateProfileStructA>
-			      C 
-			      C GetPrivateProfileStructW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetProcAddress PROTO :DWORD,:DWORD
-			      C GetProcessAffinityMask PROTO :DWORD,:DWORD,:DWORD
-			      C GetProcessHeap PROTO 
-			      C GetProcessHeaps PROTO :DWORD,:DWORD
-			      C GetProcessIoCounters PROTO :DWORD,:DWORD
-			      C GetProcessPriorityBoost PROTO :DWORD,:DWORD
-			      C GetProcessShutdownParameters PROTO :DWORD,:DWORD
-			      C GetProcessTimes PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetProcessVersion PROTO :DWORD
-			      C GetProcessWorkingSetSize PROTO :DWORD,:DWORD,:DWORD
-			      C GetProfileIntA PROTO :DWORD,:DWORD,:DWORD
- = GetProfileIntA	      C GetProfileInt equ <GetProfileIntA>
-			      C 
-			      C GetProfileIntW PROTO :DWORD,:DWORD,:DWORD
-			      C GetProfileSectionA PROTO :DWORD,:DWORD,:DWORD
- = GetProfileSectionA	      C GetProfileSection equ <GetProfileSectionA>
-			      C 
-			      C GetProfileSectionW PROTO :DWORD,:DWORD,:DWORD
-			      C GetProfileStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetProfileStringA	      C GetProfileString equ <GetProfileStringA>
-			      C 
-			      C GetProfileStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetQueuedCompletionStatus PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetShortPathNameA PROTO :DWORD,:DWORD,:DWORD
- = GetShortPathNameA	      C GetShortPathName equ <GetShortPathNameA>
-			      C 
-			      C GetShortPathNameW PROTO :DWORD,:DWORD,:DWORD
-			      C GetStartupInfoA PROTO :DWORD
- = GetStartupInfoA	      C GetStartupInfo equ <GetStartupInfoA>
-			      C 
-			      C GetStartupInfoW PROTO :DWORD
-			      C GetStdHandle PROTO :DWORD
-			      C GetStringTypeA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetStringTypeA	      C GetStringType equ <GetStringTypeA>
-			      C 
-			      C GetStringTypeExA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetStringTypeExA	      C GetStringTypeEx equ <GetStringTypeExA>
-			      C 
-			      C GetStringTypeExW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetStringTypeW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C GetSystemDefaultLCID PROTO 
-			      C GetSystemDefaultLangID PROTO 
-			      C GetSystemDefaultUILanguage PROTO 
-			      C GetSystemDirectoryA PROTO :DWORD,:DWORD
- = GetSystemDirectoryA	      C GetSystemDirectory equ <GetSystemDirectoryA>
-			      C 
-			      C GetSystemDirectoryW PROTO :DWORD,:DWORD
-			      C GetSystemInfo PROTO :DWORD
-			      C GetSystemPowerStatus PROTO :DWORD
-			      C GetSystemTime PROTO :DWORD
-			      C GetSystemTimeAdjustment PROTO :DWORD,:DWORD,:DWORD
-			      C GetSystemTimeAsFileTime PROTO :DWORD
-			      C GetSystemWindowsDirectoryA PROTO :DWORD,:DWORD
- = GetSystemWindowsDirector   C GetSystemWindowsDirectory equ <GetSystemWindowsDirectoryA>
-   yA
-			      C 
-			      C GetSystemWindowsDirectoryW PROTO :DWORD,:DWORD
-			      C GetTapeParameters PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C GetTapePosition PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetTapeStatus PROTO :DWORD
-			      C GetTempFileNameA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = GetTempFileNameA	      C GetTempFileName equ <GetTempFileNameA>
-			      C 
-			      C GetTempFileNameW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C GetTempPathA PROTO :DWORD,:DWORD
- = GetTempPathA		      C GetTempPath equ <GetTempPathA>
-			      C 
-			      C GetTempPathW PROTO :DWORD,:DWORD
-			      C GetThreadContext PROTO :DWORD,:DWORD
-			      C GetThreadLocale PROTO 
-			      C GetThreadPriority PROTO :DWORD
-			      C GetThreadPriorityBoost PROTO :DWORD,:DWORD
-			      C GetThreadSelectorEntry PROTO :DWORD,:DWORD,:DWORD
-			      C GetThreadTimes PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetTickCount PROTO 
-			      C GetTimeFormatA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetTimeFormatA	      C GetTimeFormat equ <GetTimeFormatA>
-			      C 
-			      C GetTimeFormatW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetTimeZoneInformation PROTO :DWORD
-			      C GetUserDefaultLCID PROTO 
-			      C GetUserDefaultLangID PROTO 
-			      C GetUserDefaultUILanguage PROTO 
-			      C GetVersion PROTO 
-			      C GetVersionExA PROTO :DWORD
- = GetVersionExA	      C GetVersionEx equ <GetVersionExA>
-			      C 
-			      C GetVersionExW PROTO :DWORD
-			      C GetVolumeInformationA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = GetVolumeInformationA      C GetVolumeInformation equ <GetVolumeInformationA>
-			      C 
-			      C GetVolumeInformationW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GetVolumeNameForVolumeMountPointA PROTO :DWORD,:DWORD,:DWORD
- = GetVolumeNameForVolumeMo   C GetVolumeNameForVolumeMountPoint equ <GetVolumeNameForVolumeMountPointA>
-   untPointA
-			      C 
-			      C GetVolumeNameForVolumeMountPointW PROTO :DWORD,:DWORD,:DWORD
-			      C GetVolumePathNameA PROTO :DWORD,:DWORD,:DWORD
- = GetVolumePathNameA	      C GetVolumePathName equ <GetVolumePathNameA>
-			      C 
-			      C GetVolumePathNameW PROTO :DWORD,:DWORD,:DWORD
-			      C GetWindowsDirectoryA PROTO :DWORD,:DWORD
- = GetWindowsDirectoryA	      C GetWindowsDirectory equ <GetWindowsDirectoryA>
-			      C 
-			      C GetWindowsDirectoryW PROTO :DWORD,:DWORD
-			      C GetWriteWatch PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C GlobalAddAtomA PROTO :DWORD
- = GlobalAddAtomA	      C GlobalAddAtom equ <GlobalAddAtomA>
-			      C 
-			      C GlobalAddAtomW PROTO :DWORD
-			      C GlobalAlloc PROTO :DWORD,:DWORD
-			      C GlobalCompact PROTO :DWORD
-			      C GlobalDeleteAtom PROTO :DWORD
-			      C GlobalFindAtomA PROTO :DWORD
- = GlobalFindAtomA	      C GlobalFindAtom equ <GlobalFindAtomA>
-			      C 
-			      C GlobalFindAtomW PROTO :DWORD
-			      C GlobalFix PROTO :DWORD
-			      C GlobalFlags PROTO :DWORD
-			      C GlobalFree PROTO :DWORD
-			      C GlobalGetAtomNameA PROTO :DWORD,:DWORD,:DWORD
- = GlobalGetAtomNameA	      C GlobalGetAtomName equ <GlobalGetAtomNameA>
-			      C 
-			      C GlobalGetAtomNameW PROTO :DWORD,:DWORD,:DWORD
-			      C GlobalHandle PROTO :DWORD
-			      C GlobalLock PROTO :DWORD
-			      C GlobalMemoryStatus PROTO :DWORD
-			      C GlobalMemoryStatusEx PROTO :DWORD
-			      C GlobalReAlloc PROTO :DWORD,:DWORD,:DWORD
-			      C GlobalSize PROTO :DWORD
-			      C GlobalUnWire PROTO :DWORD
-			      C GlobalUnfix PROTO :DWORD
-			      C GlobalUnlock PROTO :DWORD
-			      C GlobalWire PROTO :DWORD
-			      C Heap32First PROTO :DWORD,:DWORD,:DWORD
-			      C Heap32ListFirst PROTO :DWORD,:DWORD
-			      C Heap32ListNext PROTO :DWORD,:DWORD
-			      C Heap32Next PROTO :DWORD
-			      C HeapAlloc PROTO :DWORD,:DWORD,:DWORD
-			      C HeapCompact PROTO :DWORD,:DWORD
-			      C HeapCreate PROTO :DWORD,:DWORD,:DWORD
-			      C HeapDestroy PROTO :DWORD
-			      C HeapFree PROTO :DWORD,:DWORD,:DWORD
-			      C HeapLock PROTO :DWORD
-			      C HeapReAlloc PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C HeapSize PROTO :DWORD,:DWORD,:DWORD
-			      C HeapUnlock PROTO :DWORD
-			      C HeapValidate PROTO :DWORD,:DWORD,:DWORD
-			      C HeapWalk PROTO :DWORD,:DWORD
-			      C InitAtomTable PROTO :DWORD
-			      C InitializeCriticalSection PROTO :DWORD
-			      C InitializeCriticalSectionAndSpinCount PROTO :DWORD,:DWORD
-			      C InterlockedCompareExchange PROTO :DWORD,:DWORD,:DWORD
-			      C InterlockedDecrement PROTO :DWORD
-			      C InterlockedExchange PROTO :DWORD,:DWORD
-			      C InterlockedExchangeAdd PROTO :DWORD,:DWORD
-			      C InterlockedIncrement PROTO :DWORD
-			      C IsBadCodePtr PROTO :DWORD
-			      C IsBadHugeReadPtr PROTO :DWORD,:DWORD
-			      C IsBadHugeWritePtr PROTO :DWORD,:DWORD
-			      C IsBadReadPtr PROTO :DWORD,:DWORD
-			      C IsBadStringPtrA PROTO :DWORD,:DWORD
- = IsBadStringPtrA	      C IsBadStringPtr equ <IsBadStringPtrA>
-			      C 
-			      C IsBadStringPtrW PROTO :DWORD,:DWORD
-			      C IsBadWritePtr PROTO :DWORD,:DWORD
-			      C IsDBCSLeadByte PROTO :DWORD
-			      C IsDBCSLeadByteEx PROTO :DWORD,:DWORD
-			      C IsDebuggerPresent PROTO 
-			      C IsProcessorFeaturePresent PROTO :DWORD
-			      C IsSystemResumeAutomatic PROTO 
-			      C IsValidCodePage PROTO :DWORD
-			      C IsValidLanguageGroup PROTO :DWORD,:DWORD
-			      C IsValidLocale PROTO :DWORD,:DWORD
-			      C LCMapStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = LCMapStringA		      C LCMapString equ <LCMapStringA>
-			      C 
-			      C LCMapStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C LeaveCriticalSection PROTO :DWORD
-			      C LoadLibraryA PROTO :DWORD
- = LoadLibraryA		      C LoadLibrary equ <LoadLibraryA>
-			      C 
-			      C LoadLibraryExA PROTO :DWORD,:DWORD,:DWORD
- = LoadLibraryExA	      C LoadLibraryEx equ <LoadLibraryExA>
-			      C 
-			      C LoadLibraryExW PROTO :DWORD,:DWORD,:DWORD
-			      C LoadLibraryW PROTO :DWORD
-			      C LoadModule PROTO :DWORD,:DWORD
-			      C LoadResource PROTO :DWORD,:DWORD
-			      C LocalAlloc PROTO :DWORD,:DWORD
-			      C LocalCompact PROTO :DWORD
-			      C LocalFileTimeToFileTime PROTO :DWORD,:DWORD
-			      C LocalFlags PROTO :DWORD
-			      C LocalFree PROTO :DWORD
-			      C LocalHandle PROTO :DWORD
-			      C LocalLock PROTO :DWORD
-			      C LocalReAlloc PROTO :DWORD,:DWORD,:DWORD
-			      C LocalShrink PROTO :DWORD,:DWORD
-			      C LocalSize PROTO :DWORD
-			      C LocalUnlock PROTO :DWORD
-			      C LockFile PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C LockFileEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C LockResource PROTO :DWORD
-			      C MapUserPhysicalPages PROTO :DWORD,:DWORD,:DWORD
-			      C MapUserPhysicalPagesScatter PROTO :DWORD,:DWORD,:DWORD
-			      C MapViewOfFile PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C MapViewOfFileEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C Module32First PROTO :DWORD,:DWORD
-			      C Module32FirstW PROTO :DWORD,:DWORD
-			      C Module32Next PROTO :DWORD,:DWORD
-			      C Module32NextW PROTO :DWORD,:DWORD
-			      C MoveFileA PROTO :DWORD,:DWORD
- = MoveFileA		      C MoveFile equ <MoveFileA>
-			      C 
-			      C MoveFileExA PROTO :DWORD,:DWORD,:DWORD
- = MoveFileExA		      C MoveFileEx equ <MoveFileExA>
-			      C 
-			      C MoveFileExW PROTO :DWORD,:DWORD,:DWORD
-			      C MoveFileW PROTO :DWORD,:DWORD
-			      C MoveFileWithProgressA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = MoveFileWithProgressA      C MoveFileWithProgress equ <MoveFileWithProgressA>
-			      C 
-			      C MoveFileWithProgressW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C MulDiv PROTO :DWORD,:DWORD,:DWORD
-			      C MultiByteToWideChar PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C OpenEventA PROTO :DWORD,:DWORD,:DWORD
- = OpenEventA		      C OpenEvent equ <OpenEventA>
-			      C 
-			      C OpenEventW PROTO :DWORD,:DWORD,:DWORD
-			      C OpenFile PROTO :DWORD,:DWORD,:DWORD
-			      C OpenFileMappingA PROTO :DWORD,:DWORD,:DWORD
- = OpenFileMappingA	      C OpenFileMapping equ <OpenFileMappingA>
-			      C 
-			      C OpenFileMappingW PROTO :DWORD,:DWORD,:DWORD
-			      C OpenJobObjectA PROTO :DWORD,:DWORD,:DWORD
- = OpenJobObjectA	      C OpenJobObject equ <OpenJobObjectA>
-			      C 
-			      C OpenJobObjectW PROTO :DWORD,:DWORD,:DWORD
-			      C OpenMutexA PROTO :DWORD,:DWORD,:DWORD
- = OpenMutexA		      C OpenMutex equ <OpenMutexA>
-			      C 
-			      C OpenMutexW PROTO :DWORD,:DWORD,:DWORD
-			      C OpenProcess PROTO :DWORD,:DWORD,:DWORD
-			      C OpenSemaphoreA PROTO :DWORD,:DWORD,:DWORD
- = OpenSemaphoreA	      C OpenSemaphore equ <OpenSemaphoreA>
-			      C 
-			      C OpenSemaphoreW PROTO :DWORD,:DWORD,:DWORD
-			      C OpenThread PROTO :DWORD,:DWORD,:DWORD
-			      C OpenWaitableTimerA PROTO :DWORD,:DWORD,:DWORD
- = OpenWaitableTimerA	      C OpenWaitableTimer equ <OpenWaitableTimerA>
-			      C 
-			      C OpenWaitableTimerW PROTO :DWORD,:DWORD,:DWORD
-			      C OutputDebugStringA PROTO :DWORD
- = OutputDebugStringA	      C OutputDebugString equ <OutputDebugStringA>
-			      C 
-			      C OutputDebugStringW PROTO :DWORD
-			      C PeekConsoleInputA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = PeekConsoleInputA	      C PeekConsoleInput equ <PeekConsoleInputA>
-			      C 
-			      C PeekConsoleInputW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C PeekNamedPipe PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C PostQueuedCompletionStatus PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C PrepareTape PROTO :DWORD,:DWORD,:DWORD
-			      C Process32First PROTO :DWORD,:DWORD
-			      C Process32FirstW PROTO :DWORD,:DWORD
-			      C Process32Next PROTO :DWORD,:DWORD
-			      C Process32NextW PROTO :DWORD,:DWORD
-			      C ProcessIdToSessionId PROTO :DWORD,:DWORD
-			      C PulseEvent PROTO :DWORD
-			      C PurgeComm PROTO :DWORD,:DWORD
-			      C QueryDosDeviceA PROTO :DWORD,:DWORD,:DWORD
- = QueryDosDeviceA	      C QueryDosDevice equ <QueryDosDeviceA>
-			      C 
-			      C QueryDosDeviceW PROTO :DWORD,:DWORD,:DWORD
-			      C QueryInformationJobObject PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C QueryPerformanceCounter PROTO :DWORD
-			      C QueryPerformanceFrequency PROTO :DWORD
-			      C QueueUserAPC PROTO :DWORD,:DWORD,:DWORD
-			      C QueueUserWorkItem PROTO :DWORD,:DWORD,:DWORD
-			      C RaiseException PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C ReadConsoleA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = ReadConsoleA		      C ReadConsole equ <ReadConsoleA>
-			      C 
-			      C ReadConsoleInputA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = ReadConsoleInputA	      C ReadConsoleInput equ <ReadConsoleInputA>
-			      C 
-			      C ReadConsoleInputW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C ReadConsoleOutputA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = ReadConsoleOutputA	      C ReadConsoleOutput equ <ReadConsoleOutputA>
-			      C 
-			      C ReadConsoleOutputAttribute PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C ReadConsoleOutputCharacterA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = ReadConsoleOutputCharact   C ReadConsoleOutputCharacter equ <ReadConsoleOutputCharacterA>
-   erA
-			      C 
-			      C ReadConsoleOutputCharacterW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C ReadConsoleOutputW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C ReadConsoleW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C ReadDirectoryChangesW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C ReadFile PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C ReadFileEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C ReadFileScatter PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C ReadProcessMemory PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C RegisterWaitForSingleObject PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C RegisterWaitForSingleObjectEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C ReleaseMutex PROTO :DWORD
-			      C ReleaseSemaphore PROTO :DWORD,:DWORD,:DWORD
-			      C RemoveDirectoryA PROTO :DWORD
- = RemoveDirectoryA	      C RemoveDirectory equ <RemoveDirectoryA>
-			      C 
-			      C RemoveDirectoryW PROTO :DWORD
-			      C ReplaceFileA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = ReplaceFileA		      C ReplaceFile equ <ReplaceFileA>
-			      C 
-			      C ReplaceFileW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C RequestDeviceWakeup PROTO :DWORD
-			      C RequestWakeupLatency PROTO :DWORD
-			      C ResetEvent PROTO :DWORD
-			      C ResetWriteWatch PROTO :DWORD,:DWORD
-			      C ResumeThread PROTO :DWORD
-			      C RtlFillMemory PROTO :DWORD,:DWORD,:DWORD
-			      C RtlMoveMemory PROTO :DWORD,:DWORD,:DWORD
-			      C RtlUnwind PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C RtlZeroMemory PROTO :DWORD,:DWORD
-			      C ScrollConsoleScreenBufferA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = ScrollConsoleScreenBuffe   C ScrollConsoleScreenBuffer equ <ScrollConsoleScreenBufferA>
-   rA
-			      C 
-			      C ScrollConsoleScreenBufferW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C SearchPathA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = SearchPathA		      C SearchPath equ <SearchPathA>
-			      C 
-			      C SearchPathW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C SetCalendarInfoA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = SetCalendarInfoA	      C SetCalendarInfo equ <SetCalendarInfoA>
-			      C 
-			      C SetCalendarInfoW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C SetCommBreak PROTO :DWORD
-			      C SetCommConfig PROTO :DWORD,:DWORD,:DWORD
-			      C SetCommMask PROTO :DWORD,:DWORD
-			      C SetCommState PROTO :DWORD,:DWORD
-			      C SetCommTimeouts PROTO :DWORD,:DWORD
-			      C SetComputerNameA PROTO :DWORD
- = SetComputerNameA	      C SetComputerName equ <SetComputerNameA>
-			      C 
-			      C SetComputerNameExA PROTO :DWORD,:DWORD
- = SetComputerNameExA	      C SetComputerNameEx equ <SetComputerNameExA>
-			      C 
-			      C SetComputerNameExW PROTO :DWORD,:DWORD
-			      C SetComputerNameW PROTO :DWORD
-			      C SetConsoleActiveScreenBuffer PROTO :DWORD
-			      C SetConsoleCP PROTO :DWORD
-			      C SetConsoleCtrlHandler PROTO :DWORD,:DWORD
-			      C SetConsoleCursor PROTO :DWORD,:DWORD
-			      C SetConsoleCursorInfo PROTO :DWORD,:DWORD
-			      C SetConsoleCursorPosition PROTO :DWORD,:DWORD
-			      C SetConsoleMode PROTO :DWORD,:DWORD
-			      C SetConsoleOutputCP PROTO :DWORD
-			      C SetConsoleScreenBufferSize PROTO :DWORD,:DWORD
-			      C SetConsoleTextAttribute PROTO :DWORD,:DWORD
-			      C SetConsoleTitleA PROTO :DWORD
- = SetConsoleTitleA	      C SetConsoleTitle equ <SetConsoleTitleA>
-			      C 
-			      C SetConsoleTitleW PROTO :DWORD
-			      C SetConsoleWindowInfo PROTO :DWORD,:DWORD,:DWORD
-			      C SetCriticalSectionSpinCount PROTO :DWORD,:DWORD
-			      C SetCurrentDirectoryA PROTO :DWORD
- = SetCurrentDirectoryA	      C SetCurrentDirectory equ <SetCurrentDirectoryA>
-			      C 
-			      C SetCurrentDirectoryW PROTO :DWORD
-			      C SetDefaultCommConfigA PROTO :DWORD,:DWORD,:DWORD
- = SetDefaultCommConfigA      C SetDefaultCommConfig equ <SetDefaultCommConfigA>
-			      C 
-			      C SetDefaultCommConfigW PROTO :DWORD,:DWORD,:DWORD
-			      C SetEndOfFile PROTO :DWORD
-			      C SetEnvironmentVariableA PROTO :DWORD,:DWORD
- = SetEnvironmentVariableA    C SetEnvironmentVariable equ <SetEnvironmentVariableA>
-			      C 
-			      C SetEnvironmentVariableW PROTO :DWORD,:DWORD
-			      C SetErrorMode PROTO :DWORD
-			      C SetEvent PROTO :DWORD
-			      C SetFileApisToANSI PROTO 
-			      C SetFileApisToOEM PROTO 
-			      C SetFileAttributesA PROTO :DWORD,:DWORD
- = SetFileAttributesA	      C SetFileAttributes equ <SetFileAttributesA>
-			      C 
-			      C SetFileAttributesW PROTO :DWORD,:DWORD
-			      C SetFilePointer PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C SetFilePointerEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C SetFileTime PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C SetHandleCount PROTO :DWORD
-			      C SetHandleInformation PROTO :DWORD,:DWORD,:DWORD
-			      C SetInformationJobObject PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C SetLastError PROTO :DWORD
-			      C SetLocalTime PROTO :DWORD
-			      C SetLocaleInfoA PROTO :DWORD,:DWORD,:DWORD
- = SetLocaleInfoA	      C SetLocaleInfo equ <SetLocaleInfoA>
-			      C 
-			      C SetLocaleInfoW PROTO :DWORD,:DWORD,:DWORD
-			      C SetMailslotInfo PROTO :DWORD,:DWORD
-			      C SetMessageWaitingIndicator PROTO :DWORD,:DWORD
-			      C SetNamedPipeHandleState PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C SetPriorityClass PROTO :DWORD,:DWORD
-			      C SetProcessAffinityMask PROTO :DWORD,:DWORD
-			      C SetProcessPriorityBoost PROTO :DWORD,:DWORD
-			      C SetProcessShutdownParameters PROTO :DWORD,:DWORD
-			      C SetProcessWorkingSetSize PROTO :DWORD,:DWORD,:DWORD
-			      C SetStdHandle PROTO :DWORD,:DWORD
-			      C SetSystemPowerState PROTO :DWORD,:DWORD
-			      C SetSystemTime PROTO :DWORD
-			      C SetSystemTimeAdjustment PROTO :DWORD,:DWORD
-			      C SetTapeParameters PROTO :DWORD,:DWORD,:DWORD
-			      C SetTapePosition PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C SetThreadAffinityMask PROTO :DWORD,:DWORD
-			      C SetThreadContext PROTO :DWORD,:DWORD
-			      C SetThreadExecutionState PROTO :DWORD
-			      C SetThreadIdealProcessor PROTO :DWORD,:DWORD
-			      C SetThreadLocale PROTO :DWORD
-			      C SetThreadPriority PROTO :DWORD,:DWORD
-			      C SetThreadPriorityBoost PROTO :DWORD,:DWORD
-			      C SetTimeZoneInformation PROTO :DWORD
-			      C SetTimerQueueTimer PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C SetUnhandledExceptionFilter PROTO :DWORD
-			      C SetVolumeLabelA PROTO :DWORD,:DWORD
- = SetVolumeLabelA	      C SetVolumeLabel equ <SetVolumeLabelA>
-			      C 
-			      C SetVolumeLabelW PROTO :DWORD,:DWORD
-			      C SetVolumeMountPointA PROTO :DWORD,:DWORD
- = SetVolumeMountPointA	      C SetVolumeMountPoint equ <SetVolumeMountPointA>
-			      C 
-			      C SetVolumeMountPointW PROTO :DWORD,:DWORD
-			      C SetWaitableTimer PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C SetupComm PROTO :DWORD,:DWORD,:DWORD
-			      C SignalObjectAndWait PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C SizeofResource PROTO :DWORD,:DWORD
-			      C Sleep PROTO :DWORD
-			      C SleepEx PROTO :DWORD,:DWORD
-			      C SuspendThread PROTO :DWORD
-			      C SwitchToFiber PROTO :DWORD
-			      C SwitchToThread PROTO 
-			      C SystemTimeToFileTime PROTO :DWORD,:DWORD
-			      C SystemTimeToTzSpecificLocalTime PROTO :DWORD,:DWORD,:DWORD
-			      C TerminateJobObject PROTO :DWORD,:DWORD
-			      C TerminateProcess PROTO :DWORD,:DWORD
-			      C TerminateThread PROTO :DWORD,:DWORD
-			      C Thread32First PROTO :DWORD,:DWORD
-			      C Thread32Next PROTO :DWORD,:DWORD
-			      C TlsAlloc PROTO 
-			      C TlsFree PROTO :DWORD
-			      C TlsGetValue PROTO :DWORD
-			      C TlsSetValue PROTO :DWORD,:DWORD
-			      C Toolhelp32ReadProcessMemory PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C TransactNamedPipe PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C TransmitCommChar PROTO :DWORD,:DWORD
-			      C TryEnterCriticalSection PROTO :DWORD
-			      C UnhandledExceptionFilter PROTO :DWORD
-			      C UnlockFile PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C UnlockFileEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C UnmapViewOfFile PROTO :DWORD
-			      C UnregisterWait PROTO :DWORD
-			      C UnregisterWaitEx PROTO :DWORD,:DWORD
-			      C UpdateResourceA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = UpdateResourceA	      C UpdateResource equ <UpdateResourceA>
-			      C 
-			      C UpdateResourceW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C VerLanguageNameA PROTO :DWORD,:DWORD,:DWORD
- = VerLanguageNameA	      C VerLanguageName equ <VerLanguageNameA>
-			      C 
-			      C VerLanguageNameW PROTO :DWORD,:DWORD,:DWORD
-			      C VerSetConditionMask PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C VerifyVersionInfoA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = VerifyVersionInfoA	      C VerifyVersionInfo equ <VerifyVersionInfoA>
-			      C 
-			      C VerifyVersionInfoW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C VirtualAlloc PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C VirtualAllocEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C VirtualFree PROTO :DWORD,:DWORD,:DWORD
-			      C VirtualFreeEx PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C VirtualLock PROTO :DWORD,:DWORD
-			      C VirtualProtect PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C VirtualProtectEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C VirtualQuery PROTO :DWORD,:DWORD,:DWORD
-			      C VirtualQueryEx PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C VirtualUnlock PROTO :DWORD,:DWORD
-			      C WaitCommEvent PROTO :DWORD,:DWORD,:DWORD
-			      C WaitForDebugEvent PROTO :DWORD,:DWORD
-			      C WaitForMultipleObjects PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C WaitForMultipleObjectsEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WaitForSingleObject PROTO :DWORD,:DWORD
-			      C WaitForSingleObjectEx PROTO :DWORD,:DWORD,:DWORD
-			      C WaitNamedPipeA PROTO :DWORD,:DWORD
- = WaitNamedPipeA	      C WaitNamedPipe equ <WaitNamedPipeA>
-			      C 
-			      C WaitNamedPipeW PROTO :DWORD,:DWORD
-			      C WideCharToMultiByte PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WinExec PROTO :DWORD,:DWORD
-			      C WriteConsoleA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = WriteConsoleA	      C WriteConsole equ <WriteConsoleA>
-			      C 
-			      C WriteConsoleInputA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = WriteConsoleInputA	      C WriteConsoleInput equ <WriteConsoleInputA>
-			      C 
-			      C WriteConsoleInputW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C WriteConsoleOutputA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = WriteConsoleOutputA	      C WriteConsoleOutput equ <WriteConsoleOutputA>
-			      C 
-			      C WriteConsoleOutputAttribute PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WriteConsoleOutputCharacterA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = WriteConsoleOutputCharac   C WriteConsoleOutputCharacter equ <WriteConsoleOutputCharacterA>
-   terA
-			      C 
-			      C WriteConsoleOutputCharacterW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WriteConsoleOutputW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WriteConsoleW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WriteFile PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WriteFileEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WriteFileGather PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WritePrivateProfileSectionA PROTO :DWORD,:DWORD,:DWORD
- = WritePrivateProfileSecti   C WritePrivateProfileSection equ <WritePrivateProfileSectionA>
-   onA
-			      C 
-			      C WritePrivateProfileSectionW PROTO :DWORD,:DWORD,:DWORD
-			      C WritePrivateProfileStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD
- = WritePrivateProfileStrin   C WritePrivateProfileString equ <WritePrivateProfileStringA>
-   gA
-			      C 
-			      C WritePrivateProfileStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C WritePrivateProfileStructA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
- = WritePrivateProfileStruc   C WritePrivateProfileStruct equ <WritePrivateProfileStructA>
-   tA
-			      C 
-			      C WritePrivateProfileStructW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WriteProcessMemory PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
-			      C WriteProfileSectionA PROTO :DWORD,:DWORD
- = WriteProfileSectionA	      C WriteProfileSection equ <WriteProfileSectionA>
-			      C 
-			      C WriteProfileSectionW PROTO :DWORD,:DWORD
-			      C WriteProfileStringA PROTO :DWORD,:DWORD,:DWORD
- = WriteProfileStringA	      C WriteProfileString equ <WriteProfileStringA>
-			      C 
-			      C WriteProfileStringW PROTO :DWORD,:DWORD,:DWORD
-			      C WriteTapemark PROTO :DWORD,:DWORD,:DWORD,:DWORD
-			      C _hread PROTO :DWORD,:DWORD,:DWORD
-			      C _hwrite PROTO :DWORD,:DWORD,:DWORD
-			      C _lclose PROTO :DWORD
-			      C _lcreat PROTO :DWORD,:DWORD
-			      C _llseek PROTO :DWORD,:DWORD,:DWORD
-			      C _lopen PROTO :DWORD,:DWORD
-			      C _lread PROTO :DWORD,:DWORD,:DWORD
-			      C _lwrite PROTO :DWORD,:DWORD,:DWORD
-			      C lstrcatA PROTO :DWORD,:DWORD
- = lstrcatA		      C lstrcat equ <lstrcatA>
-			      C 
-			      C lstrcatW PROTO :DWORD,:DWORD
-			      C lstrcmpA PROTO :DWORD,:DWORD
- = lstrcmpA		      C lstrcmp equ <lstrcmpA>
-			      C 
-			      C lstrcmpW PROTO :DWORD,:DWORD
-			      C lstrcmpiA PROTO :DWORD,:DWORD
- = lstrcmpiA		      C lstrcmpi equ <lstrcmpiA>
-			      C 
-			      C lstrcmpiW PROTO :DWORD,:DWORD
-			      C lstrcpyA PROTO :DWORD,:DWORD
- = lstrcpyA		      C lstrcpy equ <lstrcpyA>
-			      C 
-			      C lstrcpyW PROTO :DWORD,:DWORD
-			      C lstrcpynA PROTO :DWORD,:DWORD,:DWORD
- = lstrcpynA		      C lstrcpyn equ <lstrcpynA>
-			      C 
-			      C lstrcpynW PROTO :DWORD,:DWORD,:DWORD
-			      C lstrlenA PROTO :DWORD
- = lstrlenA		      C lstrlen equ <lstrlenA>
-			      C 
-			      C lstrlenW PROTO :DWORD
-			      C 
-				includelib masm32.lib
-				includelib kernel32.lib
+				.xlist
+				.list
+				;Считая, что все даты даются по григорианскому календарю (“новому
+				;стилю”), описать: 1) функцию, подсчитывающую, сколько дней прошло от 1-го
+				;января 1-го года нашей эры до некоторой даты; 2) функцию определения дня
+				;недели, на который приходится заданная дата (1 января 1 –го года н.э. было
+				;понедельником). Использовать эти функции для определения дня недели по
+				;заданной дате.
+				;/* year%4==0&amp;&amp;year%100!=0||year%400==0 */
+
 
  00000000			.const
- 00000000 45 6E 74 65 72	    enterStr db 'Enter line', 10, 13, 0
-	   20 6C 69 6E 65
+ 00000000 45 6E 74 65 72	    start_text  db  "Enter date as DD.MM.YYYY:", 10, 13, 0
+	   20 64 61 74 65
+	   20 61 73 20 44
+	   44 2E 4D 4D 2E
+	   59 59 59 59 3A
 	   0A 0D 00
- 0000000D 50 72 65 73 73	    exitStr db 'Press someting to exit', 10, 13, 0
+ 0000001C 50 72 65 73 73	    exitStr db 'Press someting to exit', 10, 13, 0
 	   20 73 6F 6D 65
 	   74 69 6E 67 20
 	   74 6F 20 65 78
 	   69 74 0A 0D 00
- 00000000			.data 
- 00000000  00000032 [		    MyStr dw 50 dup(?)
+ 00000000			.data
+ 00000000  0000000F [		    Num_str   db  15 dup ('?');Хранение числа как строки, используется  NumToStr
+	    3F
+	   ]
+ 0000000F 00000002		    Num_Value   dd  2
+ 00000013 0A 0D 00		    end_of_str  db  10, 13, 0
+
+
+ 00000016  00000080 [		    inputStr    db  128 dup(?)
+	    00
+	   ]
+ 00000096  00000003 [		    inputDate   dw  3 dup(?)
 	    0000
 	   ]
- 00000064 00000000		    temp dd ?
- 00000068 2A 0A 0D 00		    cym db '*', 10, 13, 0
  00000000			.code
- 00000000			    start:
-				    invoke StdOut, offset enterStr
-				    invoke StdIn, offset MyStr, 50
- 00000016  B9 00000000		    mov ECX, 0
- 0000001B  B9 00000000 E	    mov ECX, lstr
- 00000020			        cycle:
-				        invoke StdOut, offset cym
- 0000002A  E2 F4		        loop cycle 
-				    invoke StdOut, offset temp
-				    invoke StdIn, offset MyStr, 50
 
-				    ;invoke StdOut, offset MyStr
+				;в стекe: 1) адрес строки с датой db
+				;2) адрес переменной для записи результата dw
+ 00000000			GetNumData proc far uses ECX ESI EDI EAX EBX ECX
+ 00000006  55			    push EBP
+ 00000007  8B EC		    mov EBP, ESP
+ 00000009  8B 75 28		    mov ESI, [EBP + 40] ;строка с датой 
+ 0000000C  8B 7D 24		    mov EDI, [EBP + 36] ; сюда записывается результат
+
+				    irp i, <2, 2, 4>
+				        rept i
+				            xor ax, ax
+				            lodsb
+				            sub ax, 30h
+				            push ax ;запись прочитанной цифры
+				        endm
+				        xor cx, cx; тут накапливается число
+				        mov bx, 1;тут накапливаются десятки
+				        rept i
+				            pop ax
+				            mul bx; умножение на накопленные десятки.
+				            add cx, ax; предполагается, что число не выйдет за пределы слова
+				            mov ax, bx
+				            mov bx, 10
+				            mul bx
+				            mov bx, ax
+				        endm 
+				        mov [EDI], cx
+				        add EDI, 2
+				        inc ESI
+				    endm
+ 0000000F  66| 33 C0	     2	            xor ax, ax
+ 00000012  AC		     2	            lodsb
+ 00000013  66| 83 E8 30	     2	            sub ax, 30h
+ 00000017  66| 50	     2	            push ax ;запись прочитанной цифры
+ 00000019  66| 33 C0	     2	            xor ax, ax
+ 0000001C  AC		     2	            lodsb
+ 0000001D  66| 83 E8 30	     2	            sub ax, 30h
+ 00000021  66| 50	     2	            push ax ;запись прочитанной цифры
+ 00000023  66| 33 C9	     1	        xor cx, cx; тут накапливается число
+ 00000026  66| BB 0001	     1	        mov bx, 1;тут накапливаются десятки
+ 0000002A  66| 58	     2	            pop ax
+ 0000002C  66| F7 E3	     2	            mul bx; умножение на накопленные десятки.
+ 0000002F  66| 03 C8	     2	            add cx, ax; предполагается, что число не выйдет за пределы слова
+ 00000032  66| 8B C3	     2	            mov ax, bx
+ 00000035  66| BB 000A	     2	            mov bx, 10
+ 00000039  66| F7 E3	     2	            mul bx
+ 0000003C  66| 8B D8	     2	            mov bx, ax
+ 0000003F  66| 58	     2	            pop ax
+ 00000041  66| F7 E3	     2	            mul bx; умножение на накопленные десятки.
+ 00000044  66| 03 C8	     2	            add cx, ax; предполагается, что число не выйдет за пределы слова
+ 00000047  66| 8B C3	     2	            mov ax, bx
+ 0000004A  66| BB 000A	     2	            mov bx, 10
+ 0000004E  66| F7 E3	     2	            mul bx
+ 00000051  66| 8B D8	     2	            mov bx, ax
+ 00000054  66| 89 0F	     1	        mov [EDI], cx
+ 00000057  83 C7 02	     1	        add EDI, 2
+ 0000005A  46		     1	        inc ESI
+ 0000005B  66| 33 C0	     2	            xor ax, ax
+ 0000005E  AC		     2	            lodsb
+ 0000005F  66| 83 E8 30	     2	            sub ax, 30h
+ 00000063  66| 50	     2	            push ax ;запись прочитанной цифры
+ 00000065  66| 33 C0	     2	            xor ax, ax
+ 00000068  AC		     2	            lodsb
+ 00000069  66| 83 E8 30	     2	            sub ax, 30h
+ 0000006D  66| 50	     2	            push ax ;запись прочитанной цифры
+ 0000006F  66| 33 C9	     1	        xor cx, cx; тут накапливается число
+ 00000072  66| BB 0001	     1	        mov bx, 1;тут накапливаются десятки
+ 00000076  66| 58	     2	            pop ax
+ 00000078  66| F7 E3	     2	            mul bx; умножение на накопленные десятки.
+ 0000007B  66| 03 C8	     2	            add cx, ax; предполагается, что число не выйдет за пределы слова
+ 0000007E  66| 8B C3	     2	            mov ax, bx
+ 00000081  66| BB 000A	     2	            mov bx, 10
+ 00000085  66| F7 E3	     2	            mul bx
+ 00000088  66| 8B D8	     2	            mov bx, ax
+ 0000008B  66| 58	     2	            pop ax
+ 0000008D  66| F7 E3	     2	            mul bx; умножение на накопленные десятки.
+ 00000090  66| 03 C8	     2	            add cx, ax; предполагается, что число не выйдет за пределы слова
+ 00000093  66| 8B C3	     2	            mov ax, bx
+ 00000096  66| BB 000A	     2	            mov bx, 10
+ 0000009A  66| F7 E3	     2	            mul bx
+ 0000009D  66| 8B D8	     2	            mov bx, ax
+ 000000A0  66| 89 0F	     1	        mov [EDI], cx
+ 000000A3  83 C7 02	     1	        add EDI, 2
+ 000000A6  46		     1	        inc ESI
+ 000000A7  66| 33 C0	     2	            xor ax, ax
+ 000000AA  AC		     2	            lodsb
+ 000000AB  66| 83 E8 30	     2	            sub ax, 30h
+ 000000AF  66| 50	     2	            push ax ;запись прочитанной цифры
+ 000000B1  66| 33 C0	     2	            xor ax, ax
+ 000000B4  AC		     2	            lodsb
+ 000000B5  66| 83 E8 30	     2	            sub ax, 30h
+ 000000B9  66| 50	     2	            push ax ;запись прочитанной цифры
+ 000000BB  66| 33 C0	     2	            xor ax, ax
+ 000000BE  AC		     2	            lodsb
+ 000000BF  66| 83 E8 30	     2	            sub ax, 30h
+ 000000C3  66| 50	     2	            push ax ;запись прочитанной цифры
+ 000000C5  66| 33 C0	     2	            xor ax, ax
+ 000000C8  AC		     2	            lodsb
+ 000000C9  66| 83 E8 30	     2	            sub ax, 30h
+ 000000CD  66| 50	     2	            push ax ;запись прочитанной цифры
+ 000000CF  66| 33 C9	     1	        xor cx, cx; тут накапливается число
+ 000000D2  66| BB 0001	     1	        mov bx, 1;тут накапливаются десятки
+ 000000D6  66| 58	     2	            pop ax
+ 000000D8  66| F7 E3	     2	            mul bx; умножение на накопленные десятки.
+ 000000DB  66| 03 C8	     2	            add cx, ax; предполагается, что число не выйдет за пределы слова
+ 000000DE  66| 8B C3	     2	            mov ax, bx
+ 000000E1  66| BB 000A	     2	            mov bx, 10
+ 000000E5  66| F7 E3	     2	            mul bx
+ 000000E8  66| 8B D8	     2	            mov bx, ax
+ 000000EB  66| 58	     2	            pop ax
+ 000000ED  66| F7 E3	     2	            mul bx; умножение на накопленные десятки.
+ 000000F0  66| 03 C8	     2	            add cx, ax; предполагается, что число не выйдет за пределы слова
+ 000000F3  66| 8B C3	     2	            mov ax, bx
+ 000000F6  66| BB 000A	     2	            mov bx, 10
+ 000000FA  66| F7 E3	     2	            mul bx
+ 000000FD  66| 8B D8	     2	            mov bx, ax
+ 00000100  66| 58	     2	            pop ax
+ 00000102  66| F7 E3	     2	            mul bx; умножение на накопленные десятки.
+ 00000105  66| 03 C8	     2	            add cx, ax; предполагается, что число не выйдет за пределы слова
+ 00000108  66| 8B C3	     2	            mov ax, bx
+ 0000010B  66| BB 000A	     2	            mov bx, 10
+ 0000010F  66| F7 E3	     2	            mul bx
+ 00000112  66| 8B D8	     2	            mov bx, ax
+ 00000115  66| 58	     2	            pop ax
+ 00000117  66| F7 E3	     2	            mul bx; умножение на накопленные десятки.
+ 0000011A  66| 03 C8	     2	            add cx, ax; предполагается, что число не выйдет за пределы слова
+ 0000011D  66| 8B C3	     2	            mov ax, bx
+ 00000120  66| BB 000A	     2	            mov bx, 10
+ 00000124  66| F7 E3	     2	            mul bx
+ 00000127  66| 8B D8	     2	            mov bx, ax
+ 0000012A  66| 89 0F	     1	        mov [EDI], cx
+ 0000012D  83 C7 02	     1	        add EDI, 2
+ 00000130  46		     1	        inc ESI
+
+ 00000131  8B E5		    mov ESP, EBP
+ 00000133  5D			    pop EBP
+				    ret 
+ 0000013B			GetNumData endp
+				;-----------------------------------------------------------------------------------------------------------
+				;параметры - через внешние имена: Num_str, end_of_str, Num_Valu
+ 0000013B			NumToStr proc far  ; взято из лабораторной работы 2; 
+ 0000013B  55			    push EBP
+ 0000013C  8B EC		    mov EBP, ESP
+ 0000013E  60			    pushad
+				    
+ 0000013F  BF 00000000 R	    mov edi, offset Num_str 
+ 00000144  8B 1D 0000000F R	    mov ebx, Num_Value
+ 0000014A  B9 0000000F		    mov ecx, 15
+ 0000014F  83 3D 0000000F R	    cmp Num_Value, 0
+	   00
+ 00000156  7D 05		    jge positive ;если число отрицательное, первым в строку запишется "-"
+ 00000158  B0 2D		        mov al, "-"
+ 0000015A  AA			        stosb
+ 0000015B  F7 DB		        neg ebx
+ 0000015D			    positive:
+ 0000015D  33 D2		        xor edx, edx
+ 0000015F  8B C3		        mov eax, ebx
+
+ 00000161  BB 0000000A		        mov ebx, 10
+ 00000166  F7 F3		        div ebx    ;Деление на 10
+ 00000168  83 C2 30		        add edx, 48  ;К остатку прибавить 48, остаток точно меньше 10
+ 0000016B  8B D8		        mov ebx, eax  ;Сохрaнить целую часть
+ 0000016D  66| 8B C2		        mov ax, dx
+ 00000170  66| 50		        push ax     ;Соханить цифру в стек
+ 00000172  66| 83 FB 00		        cmp bx, 0   ;Если целая часть - 0, выйти из цикла
+ 00000176  E0 E5		        loopnz positive
+ 00000178			    myEnd:
+ 00000178  B8 0000000F		        mov eax, 15
+ 0000017D  2B C1		        sub eax, ecx ; сколько цифр было получено
+ 0000017F  83 3D 0000000F R	        cmp Num_Value, 0      ;был ли знак "-" в начале строки числа
+	   00
+ 00000186  7D 01		        jge pos
+ 00000188  40			        inc eax
+ 00000189			        pos:
+ 00000189  8B C8		        mov ecx, eax
+ 0000018B  8B D0		        mov edx, eax; Нужно сохранить колличество цифр 
+ 0000018D			        cycle2:
+ 0000018D  66| 58		            pop ax
+ 0000018F  AA			            stosb
+ 00000190  E2 FB		        loop cycle2
+ 00000192  BE 00000013 R	        mov esi, offset end_of_str ;Добавить символы окончания строки
+ 00000197  BF 00000000 R	        mov edi, offset Num_str
+ 0000019C  03 FA		        add edi, edx
+ 0000019E  B9 00000003		        mov ecx, 3
+ 000001A3  F3/ 66| A5		        rep movsw
+ 000001A6  61			        popad
+ 000001A7  8B E5		        mov ESP, EBP
+ 000001A9  5D			        pop EBP
+ 000001AA  CB			        ret 
+ 000001AB			    NumToStr endp
+				;--------------------------------------------------------------------------------------------------------------------
+
+ 000001AB			main proc far
+				    invoke StdOut, offset start_text
+				    invoke StdIn, offset inputStr, 128
+ 000001C4  68 00000016 R	    push offset inputStr
+ 000001C9  68 00000096 R	    push offset inputDate
+ 000001CE  0E E8 FFFFFE2C	    call GetNumData
+
+ 000001D4  B8 00000096 R	    mov eax, offset inputDate
+ 000001D9  83 C0 04		    add eax, 4
+ 000001DC  33 DB		    xor ebx, ebx
+ 000001DE  66| 8B 18		    mov bx, word ptr [eax]
+ 000001E1  89 1D 0000000F R	    mov Num_Value, ebx
+
+ 000001E7  0E E8 FFFFFF4E	    call NumToStr
+
+ 000001ED  8D 05 00000000 R	    lea eax, Num_str
+				    invoke StdOut, eax
+
 
 				    invoke StdOut, offset exitStr
-				    invoke StdIn, offset MyStr, 50
-				    invoke ExitProcess,0
-				end start
-Microsoft (R) Macro Assembler Version 6.15.8803		    02/23/20 14:24:05
-Lab1.asm						     Symbols 2 - 1
+				    invoke StdIn, offset inputStr, 128 
+ 00000212  CB			    ret
+ 00000213			main endp
+				end main
+Microsoft (R) Macro Assembler Version 6.15.8803		    05/20/20 18:20:31
+Lab3.asm						     Symbols 2 - 1
 
 
 
@@ -1354,10 +276,10 @@ Segments and Groups:
 
                 N a m e                 Size     Length   Align   Combine Class
 
-CONST  . . . . . . . . . . . . .	32 Bit	 00000026 DWord	  Public  'CONST'	 ReadOnly
+CONST  . . . . . . . . . . . . .	32 Bit	 00000035 DWord	  Public  'CONST'	 ReadOnly
 FLAT . . . . . . . . . . . . . .	GROUP
-_DATA  . . . . . . . . . . . . .	32 Bit	 0000006C DWord	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 0000005F DWord	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000009C DWord	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000213 DWord	  Public  'CODE'	
 
 
 Procedures,  parameters and locals:
@@ -1668,6 +590,7 @@ GetModuleHandleW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 GetNamedPipeHandleStateA . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetNamedPipeHandleStateW . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetNamedPipeInfo . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetNumData . . . . . . . . . . .	P Far	 00000000 _TEXT	Length= 0000013B Public STDCALL
 GetNumberFormatA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetNumberFormatW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetNumberOfConsoleInputEvents  .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -1866,6 +789,11 @@ MoveFileW  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 MulDiv . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 MultiByteToWideChar  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 NameFromPath . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+NumToStr . . . . . . . . . . . .	P Far	 0000013B _TEXT	Length= 00000070 Public STDCALL
+  positive . . . . . . . . . . .	L Near	 0000015D _TEXT	
+  myEnd  . . . . . . . . . . . .	L Near	 00000178 _TEXT	
+  pos  . . . . . . . . . . . . .	L Near	 00000189 _TEXT	
+  cycle2 . . . . . . . . . . . .	L Near	 0000018D _TEXT	
 OpenEventA . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 OpenEventW . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 OpenFileDialog . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -2158,6 +1086,7 @@ lstrcpynW  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 lstrlenA . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 lstrlenW . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ltoa . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+main . . . . . . . . . . . . . .	P Far	 000001AB _TEXT	Length= 00000068 Public STDCALL
 memfill  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 nrQsortA . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 nrQsortD . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -2320,7 +1249,8 @@ LoadLibrary  . . . . . . . . . .	Text   	 LoadLibraryA
 MoveFileEx . . . . . . . . . . .	Text   	 MoveFileExA
 MoveFileWithProgress . . . . . .	Text   	 MoveFileWithProgressA
 MoveFile . . . . . . . . . . . .	Text   	 MoveFileA
-MyStr  . . . . . . . . . . . . .	Word	 00000000 _DATA	
+Num_Value  . . . . . . . . . . .	DWord	 0000000F _DATA	
+Num_str  . . . . . . . . . . . .	Byte	 00000000 _DATA	
 OpenEvent  . . . . . . . . . . .	Text   	 OpenEventA
 OpenFileMapping  . . . . . . . .	Text   	 OpenFileMappingA
 OpenJobObject  . . . . . . . . .	Text   	 OpenJobObjectA
@@ -2364,10 +1294,10 @@ WriteProfileSection  . . . . . .	Text   	 WriteProfileSectionA
 WriteProfileString . . . . . . .	Text   	 WriteProfileStringA
 cmpsi  . . . . . . . . . . . . .	Text   	 szCmpi
 cmpstr . . . . . . . . . . . . .	Text   	 szCmp
-cycle  . . . . . . . . . . . . .	L Near	 00000020 _TEXT	
-cym  . . . . . . . . . . . . . .	Byte	 00000068 _DATA	
-enterStr . . . . . . . . . . . .	Byte	 00000000 CONST	
-exitStr  . . . . . . . . . . . .	Byte	 0000000D CONST	
+end_of_str . . . . . . . . . . .	Byte	 00000013 _DATA	
+exitStr  . . . . . . . . . . . .	Byte	 0000001C CONST	
+inputDate  . . . . . . . . . . .	Word	 00000096 _DATA	
+inputStr . . . . . . . . . . . .	Byte	 00000016 _DATA	
 lcase  . . . . . . . . . . . . .	Text   	 szLower
 lnstr  . . . . . . . . . . . . .	Text   	 szLen
 lstrcat  . . . . . . . . . . . .	Text   	 lstrcatA
@@ -2382,8 +1312,7 @@ midstr . . . . . . . . . . . . .	Text   	 szMid
 revstr . . . . . . . . . . . . .	Text   	 szRev
 rstr . . . . . . . . . . . . . .	Text   	 szRight
 rtrim  . . . . . . . . . . . . .	Text   	 szRtrim
-start  . . . . . . . . . . . . .	L Near	 00000000 _TEXT	Public STDCALL
-temp . . . . . . . . . . . . . .	DWord	 00000064 _DATA	
+start_text . . . . . . . . . . .	Byte	 00000000 CONST	
 trim . . . . . . . . . . . . . .	Text   	 szTrim
 ucase  . . . . . . . . . . . . .	Text   	 szUpper
 

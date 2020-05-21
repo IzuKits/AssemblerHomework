@@ -1,0 +1,2665 @@
+Microsoft (R) Macro Assembler Version 6.15.8803		    05/20/20 11:24:17
+Lab2.asm						     Page 1 - 1
+
+
+				.386
+				.model flat, stdcall
+				include masm32.inc 
+			      C comment * ���������������������������������������������������������������
+			      C            Include file for procedures in the MASM32 library
+			      C           ��������������������������������������������������������������� *
+			      C 
+			      C ; for both --> arg num, buffer
+			      C ArgCl  PROTO :DWORD,:DWORD   ; GUI mode version
+			      C ArgClC PROTO :DWORD,:DWORD   ; console mode version
+			      C GetCL PROTO :DWORD,:DWORD
+			      C 
+			      C Alloc       PROTO :DWORD
+			      C Free        PROTO :DWORD
+			      C 
+			      C comment * --------------------------
+			      C         numeric and text conversions
+			      C         ---------------------------- *
+			      C a2dw   PROTO :DWORD
+			      C atodw  PROTO :DWORD          ; return value in eax
+			      C htodw  PROTO :DWORD          ; return value in eax
+			      C dwtoa  PROTO :DWORD,:DWORD   ; value - buffer
+			      C dw2a   PROTO :DWORD,:DWORD
+			      C dw2hex PROTO :DWORD,:DWORD
+			      C dw2ah  PROTO :DWORD,:DWORD
+			      C 
+			      C GetErrDescription PROTO :DWORD
+			      C 
+			      C comment * -----------------------------------
+			      C         string and floating point conversions
+			      C         ------------------------------------- *
+			      C FloatToStr  proto stdcall fpin:QWORD, szDbl:PTR CHAR
+			      C FloatToStr2	proto	stdcall fpin:QWORD, szDbl:PTR CHAR
+			      C StrToFloat	proto	stdcall szIn:PTR BYTE, fpout:PTR DWORD
+			      C 
+			      C comment * ---------------
+			      C         search algorithms
+			      C         ----------------- *
+			      C InString  PROTO :DWORD,:DWORD,:DWORD ; StartPos - lpszString - lpszSubStr
+			      C BinSearch PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD      ; classic scanner
+			      C 
+			      C ; Boyer Moore based algorithms
+			      C ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      C BMBinSearch  PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD   ; complete BM
+			      C BMHBinsearch PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD   ; horspool variation
+			      C SBMBinSearch PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD   ; simplified version
+			      C WordCount    PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C 
+			      C comment * ---------------------------
+			      C         encryption algorithms for
+			      C         "one shot" or "one pass" pads
+			      C         ----------------------------- *
+			      C XorData PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C RolData PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C RorData PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C 
+			      C StrLen PROTO :DWORD ; Agner Fog's high speed string length algo
+			      C 
+			      C comment * ------------------------------------
+			      C         zero terminated string procedures have
+			      C         been renamed for consistency. Equates
+			      C         to the old names are below.
+			      C         -------------------------------------- *
+			      C 
+			      C     szappend    PROTO :DWORD,:DWORD,:DWORD
+			      C     szCatStr    PROTO :DWORD,:DWORD
+			      C     szCmp       PROTO :DWORD,:DWORD
+			      C     szCmpi      PROTO :DWORD,:DWORD,:DWORD
+			      C     szCopy      PROTO :DWORD,:DWORD
+			      C     szLeft      PROTO :DWORD,:DWORD,:DWORD
+			      C     szLen       PROTO :DWORD
+			      C     szLower     PROTO :DWORD
+			      C     szLtrim     PROTO :DWORD,:DWORD
+			      C     szMid       PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C     szMultiCat  PROTO C :DWORD,:DWORD,:VARARG
+			      C     szRemove    PROTO :DWORD,:DWORD,:DWORD
+			      C     szRev       PROTO :DWORD,:DWORD
+			      C     szRight     PROTO :DWORD,:DWORD,:DWORD
+			      C     szRtrim     PROTO :DWORD,:DWORD
+			      C     szTrim      PROTO :DWORD
+			      C     szUpper     PROTO :DWORD
+			      C 
+			      C comment * ---------------------------------
+			      C         the equates for the old names must
+			      C         be put after the prototypes for the
+			      C         procedures they are mapped to.
+			      C         ----------------------------------- *
+			      C 
+ = szLen		      C     lnstr   equ <szLen>
+ = szCmp		      C     cmpstr  equ <szCmp>
+ = szCmpi		      C     cmpsi   equ <szCmpi>
+ = szRev		      C     revstr  equ <szRev>
+ = szLower		      C     lcase   equ <szLower>
+ = szUpper		      C     ucase   equ <szUpper>
+ = szLtrim		      C     ltrim   equ <szLtrim>
+ = szRtrim		      C     rtrim   equ <szRtrim>
+ = szTrim		      C     trim    equ <szTrim>
+ = szLeft		      C     lstr    equ <szLeft>
+ = szRight		      C     rstr    equ <szRight>
+ = szMid		      C     midstr  equ <szMid>
+			      C ; -----------------------------------------
+			      C 
+			      C shell PROTO :DWORD
+			      C 
+			      C StripRangeI PROTO :DWORD,:DWORD,:BYTE,:BYTE
+			      C StripRangeX PROTO :DWORD,:DWORD,:BYTE,:BYTE
+			      C 
+			      C MemCopy PROTO :DWORD,:DWORD,:DWORD  ; source - dest - length
+			      C memfill PROTO :DWORD,:DWORD,:DWORD
+			      C 
+			      C GetAppPath   PROTO :DWORD     ; buffer has app path
+			      C NameFromPath PROTO :DWORD,:DWORD
+			      C GetPathOnly  PROTO :DWORD,:DWORD
+			      C 
+			      C exist       PROTO :DWORD
+			      C filesize    PROTO :DWORD
+			      C 
+			      C FrameCtrl   PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C FrameWindow PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C FrameGrp    PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C 
+			      C Frame3D PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C line    PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C circle  PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C 
+			      C DisplayBmp   PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C DisplayIcon  PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C VerticalTile PROTO :DWORD,:DWORD,:DWORD
+			      C SetBMcolor   PROTO :DWORD,:DWORD
+			      C 
+			      C BmpButton    PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C 
+			      C StdOut       PROTO :DWORD
+			      C StdIn        PROTO :DWORD,:DWORD
+			      C locate       PROTO :DWORD,:DWORD
+			      C ClearScreen  PROTO
+			      C StripLF      PROTO :DWORD
+			      C 
+			      C BrowseForFolder PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C FontDialog      PROTO :DWORD,:DWORD,:DWORD
+			      C ColorDialog     PROTO :DWORD,:DWORD,:DWORD
+			      C PageSetupDialog PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C PrintDialog     PROTO :DWORD,:DWORD,:DWORD
+			      C 
+			      C Read_File_In    PROTO :DWORD,:DWORD
+			      C ofCallBack      PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C Write_To_Disk   PROTO :DWORD,:DWORD
+			      C sfCallBack      PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C RichEd1         PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C RichEd2         PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C 
+			      C GetPercent      PROTO :DWORD,:DWORD
+			      C IntMul          PROTO :DWORD,:DWORD
+			      C IntDiv          PROTO :DWORD,:DWORD
+			      C IntSqrt         PROTO :DWORD
+			      C 
+			      C nrandom         PROTO :DWORD
+			      C nseed           PROTO :DWORD
+			      C 
+			      C ; ---------------------------------
+			      C ; prototypes for pre-built dialogs
+			      C ; ---------------------------------
+			      C GetTextInput    PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C AboutBox        PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetFile         PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C LoadList        PROTO :DWORD,:DWORD
+			      C IPtoString      PROTO :DWORD,:DWORD
+			      C GetIP           PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C 
+			      C     MakeIP MACRO val1,val2,val3,val4
+			      C         mov ah, val1
+			      C         mov al, val2
+			      C         rol eax, 16
+			      C         mov ah, val3
+			      C         mov al, val4
+			      C       EXITM <eax>
+			      C     ENDM
+			      C 
+			      C ; ----------------------------------------
+			      C ; Ernie Murphy's image loading procedures
+			      C ; ----------------------------------------
+			      C BitmapFromFile      PROTO :DWORD
+			      C BitmapFromMemory    PROTO :DWORD,:DWORD
+			      C BitmapFromResource  PROTO :DWORD,:DWORD
+			      C 
+			      C ; -------------------
+			      C ; file IO procedures
+			      C ; -------------------
+			      C read_disk_file  PROTO :DWORD,:DWORD,:DWORD
+			      C write_disk_file PROTO :DWORD,:DWORD,:DWORD
+			      C 
+			      C ; ------------------------------
+			      C ; memory mapped file procedures
+			      C ; ------------------------------
+			      C CloseMMF  PROTO :DWORD,:DWORD
+			      C CreateMMF PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C 
+			      C ; ----------------
+			      C ; sort procedures
+			      C ; ----------------
+			      C nrQsortA PROTO :DWORD,:DWORD
+			      C nrQsortD PROTO :DWORD,:DWORD
+			      C 
+			      C CombSortA PROTO :DWORD,:DWORD
+			      C CombSortD PROTO :DWORD,:DWORD
+			      C 
+			      C testreg PROTO
+			      C 
+			      C HexDump   PROTO :DWORD,:DWORD,:DWORD
+			      C AsciiDump PROTO :DWORD,:DWORD,:DWORD
+			      C 
+			      C ; ------------------------------------------
+			      C ; ascii and 32 bit long integer conversions
+			      C ; ------------------------------------------
+			      C atol PROTO :DWORD
+			      C ltoa PROTO :DWORD,:DWORD
+			      C 
+			      C ; ----------------------------
+			      C ; File open and close dialogs
+			      C ; ----------------------------
+			      C OpenFileDialog PROTO :DWORD, :DWORD, :DWORD, :DWORD
+			      C SaveFileDialog PROTO :DWORD, :DWORD, :DWORD, :DWORD
+			      C 
+			      C a2wc        PROTO :DWORD
+			      C 
+			      C ; ----------------
+			      C ; array procedures
+			      C ; ----------------
+			      C arr_add         PROTO :DWORD,:DWORD,:DWORD
+			      C arr_mul         PROTO :DWORD,:DWORD,:DWORD
+			      C arr_sub         PROTO :DWORD,:DWORD,:DWORD
+			      C create_array    PROTO :DWORD,:DWORD
+			      C 
+			      C byte_count  PROTO :DWORD,:DWORD,:DWORD
+			      C 
+			      C load_drives PROTO :DWORD
+			      C 
+			      C udw2str PROTO :DWORD,:DWORD
+			      C ustr2dw PROTO :DWORD
+			      C 
+			      C 
+			      C 
+				include kernel32.inc 
+			      C   ; ===========================================
+			      C   ; kernel32.inc copyright MASM32 1998 - 2003
+			      C   ; ===========================================
+			      C 
+			      C AddAtomA PROTO :DWORD
+ = AddAtomA		      C AddAtom equ <AddAtomA>
+			      C 
+			      C AddAtomW PROTO :DWORD
+			      C AllocConsole PROTO 
+			      C AllocateUserPhysicalPages PROTO :DWORD,:DWORD,:DWORD
+			      C AreFileApisANSI PROTO 
+			      C AssignProcessToJobObject PROTO :DWORD,:DWORD
+			      C BackupRead PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C BackupSeek PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C BackupWrite PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C Beep PROTO :DWORD,:DWORD
+			      C BeginUpdateResourceA PROTO :DWORD,:DWORD
+ = BeginUpdateResourceA	      C BeginUpdateResource equ <BeginUpdateResourceA>
+			      C 
+			      C BeginUpdateResourceW PROTO :DWORD,:DWORD
+			      C BindIoCompletionCallback PROTO :DWORD,:DWORD,:DWORD
+			      C BuildCommDCBA PROTO :DWORD,:DWORD
+ = BuildCommDCBA	      C BuildCommDCB equ <BuildCommDCBA>
+			      C 
+			      C BuildCommDCBAndTimeoutsA PROTO :DWORD,:DWORD,:DWORD
+ = BuildCommDCBAndTimeoutsA   C BuildCommDCBAndTimeouts equ <BuildCommDCBAndTimeoutsA>
+			      C 
+			      C BuildCommDCBAndTimeoutsW PROTO :DWORD,:DWORD,:DWORD
+			      C BuildCommDCBW PROTO :DWORD,:DWORD
+			      C CallNamedPipeA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = CallNamedPipeA	      C CallNamedPipe equ <CallNamedPipeA>
+			      C 
+			      C CallNamedPipeW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C CancelDeviceWakeupRequest PROTO :DWORD
+			      C CancelIo PROTO :DWORD
+			      C CancelTimerQueueTimer PROTO :DWORD,:DWORD
+			      C CancelWaitableTimer PROTO :DWORD
+			      C ChangeTimerQueueTimer PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C ClearCommBreak PROTO :DWORD
+			      C ClearCommError PROTO :DWORD,:DWORD,:DWORD
+			      C CloseHandle PROTO :DWORD
+			      C CommConfigDialogA PROTO :DWORD,:DWORD,:DWORD
+ = CommConfigDialogA	      C CommConfigDialog equ <CommConfigDialogA>
+			      C 
+			      C CommConfigDialogW PROTO :DWORD,:DWORD,:DWORD
+			      C CompareFileTime PROTO :DWORD,:DWORD
+			      C CompareStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = CompareStringA	      C CompareString equ <CompareStringA>
+			      C 
+			      C CompareStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C ConnectNamedPipe PROTO :DWORD,:DWORD
+			      C ContinueDebugEvent PROTO :DWORD,:DWORD,:DWORD
+			      C ConvertDefaultLocale PROTO :DWORD
+			      C ConvertThreadToFiber PROTO :DWORD
+			      C CopyFileA PROTO :DWORD,:DWORD,:DWORD
+ = CopyFileA		      C CopyFile equ <CopyFileA>
+			      C 
+			      C CopyFileExA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = CopyFileExA		      C CopyFileEx equ <CopyFileExA>
+			      C 
+			      C CopyFileExW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C CopyFileW PROTO :DWORD,:DWORD,:DWORD
+			      C CreateConsoleScreenBuffer PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateDirectoryA PROTO :DWORD,:DWORD
+ = CreateDirectoryA	      C CreateDirectory equ <CreateDirectoryA>
+			      C 
+			      C CreateDirectoryExA PROTO :DWORD,:DWORD,:DWORD
+ = CreateDirectoryExA	      C CreateDirectoryEx equ <CreateDirectoryExA>
+			      C 
+			      C CreateDirectoryExW PROTO :DWORD,:DWORD,:DWORD
+			      C CreateDirectoryW PROTO :DWORD,:DWORD
+			      C CreateEventA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = CreateEventA		      C CreateEvent equ <CreateEventA>
+			      C 
+			      C CreateEventW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateFiber PROTO :DWORD,:DWORD,:DWORD
+			      C CreateFileA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = CreateFileA		      C CreateFile equ <CreateFileA>
+			      C 
+			      C CreateFileMappingA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = CreateFileMappingA	      C CreateFileMapping equ <CreateFileMappingA>
+			      C 
+			      C CreateFileMappingW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateFileW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateHardLinkA PROTO :DWORD,:DWORD,:DWORD
+ = CreateHardLinkA	      C CreateHardLink equ <CreateHardLinkA>
+			      C 
+			      C CreateHardLinkW PROTO :DWORD,:DWORD,:DWORD
+			      C CreateIoCompletionPort PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateJobObjectA PROTO :DWORD,:DWORD
+ = CreateJobObjectA	      C CreateJobObject equ <CreateJobObjectA>
+			      C 
+			      C CreateJobObjectW PROTO :DWORD,:DWORD
+			      C CreateMailslotA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = CreateMailslotA	      C CreateMailslot equ <CreateMailslotA>
+			      C 
+			      C CreateMailslotW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateMutexA PROTO :DWORD,:DWORD,:DWORD
+ = CreateMutexA		      C CreateMutex equ <CreateMutexA>
+			      C 
+			      C CreateMutexW PROTO :DWORD,:DWORD,:DWORD
+			      C CreateNamedPipeA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = CreateNamedPipeA	      C CreateNamedPipe equ <CreateNamedPipeA>
+			      C 
+			      C CreateNamedPipeW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C CreatePipe PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateProcessA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = CreateProcessA	      C CreateProcess equ <CreateProcessA>
+			      C 
+			      C CreateProcessW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateRemoteThread PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateSemaphoreA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = CreateSemaphoreA	      C CreateSemaphore equ <CreateSemaphoreA>
+			      C 
+			      C CreateSemaphoreW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateTapePartition PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateThread PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateTimerQueue PROTO 
+			      C CreateTimerQueueTimer PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C CreateToolhelp32Snapshot PROTO :DWORD,:DWORD
+			      C CreateWaitableTimerA PROTO :DWORD,:DWORD,:DWORD
+ = CreateWaitableTimerA	      C CreateWaitableTimer equ <CreateWaitableTimerA>
+			      C 
+			      C CreateWaitableTimerW PROTO :DWORD,:DWORD,:DWORD
+			      C DebugActiveProcess PROTO :DWORD
+			      C DebugBreak PROTO 
+			      C DefineDosDeviceA PROTO :DWORD,:DWORD,:DWORD
+ = DefineDosDeviceA	      C DefineDosDevice equ <DefineDosDeviceA>
+			      C 
+			      C DefineDosDeviceW PROTO :DWORD,:DWORD,:DWORD
+			      C DeleteAtom PROTO :DWORD
+			      C DeleteCriticalSection PROTO :DWORD
+			      C DeleteFiber PROTO :DWORD
+			      C DeleteFileA PROTO :DWORD
+ = DeleteFileA		      C DeleteFile equ <DeleteFileA>
+			      C 
+			      C DeleteFileW PROTO :DWORD
+			      C DeleteTimerQueue PROTO :DWORD
+			      C DeleteTimerQueueEx PROTO :DWORD,:DWORD
+			      C DeleteTimerQueueTimer PROTO :DWORD,:DWORD,:DWORD
+			      C DeleteVolumeMountPointA PROTO :DWORD
+ = DeleteVolumeMountPointA    C DeleteVolumeMountPoint equ <DeleteVolumeMountPointA>
+			      C 
+			      C DeleteVolumeMountPointW PROTO :DWORD
+			      C DeviceIoControl PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C DisableThreadLibraryCalls PROTO :DWORD
+			      C DisconnectNamedPipe PROTO :DWORD
+			      C DnsHostnameToComputerNameA PROTO :DWORD,:DWORD,:DWORD
+ = DnsHostnameToComputerNam   C DnsHostnameToComputerName equ <DnsHostnameToComputerNameA>
+   eA
+			      C 
+			      C DnsHostnameToComputerNameW PROTO :DWORD,:DWORD,:DWORD
+			      C DosDateTimeToFileTime PROTO :DWORD,:DWORD,:DWORD
+			      C DuplicateHandle PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C EndUpdateResourceA PROTO :DWORD,:DWORD
+ = EndUpdateResourceA	      C EndUpdateResource equ <EndUpdateResourceA>
+			      C 
+			      C EndUpdateResourceW PROTO :DWORD,:DWORD
+			      C EnterCriticalSection PROTO :DWORD
+			      C EnumCalendarInfoA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = EnumCalendarInfoA	      C EnumCalendarInfo equ <EnumCalendarInfoA>
+			      C 
+			      C EnumCalendarInfoExA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = EnumCalendarInfoExA	      C EnumCalendarInfoEx equ <EnumCalendarInfoExA>
+			      C 
+			      C EnumCalendarInfoExW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C EnumCalendarInfoW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C EnumDateFormatsA PROTO :DWORD,:DWORD,:DWORD
+ = EnumDateFormatsA	      C EnumDateFormats equ <EnumDateFormatsA>
+			      C 
+			      C EnumDateFormatsExA PROTO :DWORD,:DWORD,:DWORD
+ = EnumDateFormatsExA	      C EnumDateFormatsEx equ <EnumDateFormatsExA>
+			      C 
+			      C EnumDateFormatsExW PROTO :DWORD,:DWORD,:DWORD
+			      C EnumDateFormatsW PROTO :DWORD,:DWORD,:DWORD
+			      C EnumLanguageGroupLocalesA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = EnumLanguageGroupLocales   C EnumLanguageGroupLocales equ <EnumLanguageGroupLocalesA>
+   A
+			      C 
+			      C EnumLanguageGroupLocalesW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C EnumResourceLanguagesA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = EnumResourceLanguagesA     C EnumResourceLanguages equ <EnumResourceLanguagesA>
+			      C 
+			      C EnumResourceLanguagesW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C EnumResourceNamesA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = EnumResourceNamesA	      C EnumResourceNames equ <EnumResourceNamesA>
+			      C 
+			      C EnumResourceNamesW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C EnumResourceTypesA PROTO :DWORD,:DWORD,:DWORD
+ = EnumResourceTypesA	      C EnumResourceTypes equ <EnumResourceTypesA>
+			      C 
+			      C EnumResourceTypesW PROTO :DWORD,:DWORD,:DWORD
+			      C EnumSystemCodePagesA PROTO :DWORD,:DWORD
+ = EnumSystemCodePagesA	      C EnumSystemCodePages equ <EnumSystemCodePagesA>
+			      C 
+			      C EnumSystemCodePagesW PROTO :DWORD,:DWORD
+			      C EnumSystemLanguageGroupsA PROTO :DWORD,:DWORD,:DWORD
+ = EnumSystemLanguageGroups   C EnumSystemLanguageGroups equ <EnumSystemLanguageGroupsA>
+   A
+			      C 
+			      C EnumSystemLanguageGroupsW PROTO :DWORD,:DWORD,:DWORD
+			      C EnumSystemLocalesA PROTO :DWORD,:DWORD
+ = EnumSystemLocalesA	      C EnumSystemLocales equ <EnumSystemLocalesA>
+			      C 
+			      C EnumSystemLocalesW PROTO :DWORD,:DWORD
+			      C EnumTimeFormatsA PROTO :DWORD,:DWORD,:DWORD
+ = EnumTimeFormatsA	      C EnumTimeFormats equ <EnumTimeFormatsA>
+			      C 
+			      C EnumTimeFormatsW PROTO :DWORD,:DWORD,:DWORD
+			      C EnumUILanguagesA PROTO :DWORD,:DWORD,:DWORD
+ = EnumUILanguagesA	      C EnumUILanguages equ <EnumUILanguagesA>
+			      C 
+			      C EnumUILanguagesW PROTO :DWORD,:DWORD,:DWORD
+			      C EraseTape PROTO :DWORD,:DWORD,:DWORD
+			      C EscapeCommFunction PROTO :DWORD,:DWORD
+			      C ExitProcess PROTO :DWORD
+			      C ExitThread PROTO :DWORD
+			      C ExpandEnvironmentStringsA PROTO :DWORD,:DWORD,:DWORD
+ = ExpandEnvironmentStrings   C ExpandEnvironmentStrings equ <ExpandEnvironmentStringsA>
+   A
+			      C 
+			      C ExpandEnvironmentStringsW PROTO :DWORD,:DWORD,:DWORD
+			      C FatalAppExitA PROTO :DWORD,:DWORD
+ = FatalAppExitA	      C FatalAppExit equ <FatalAppExitA>
+			      C 
+			      C FatalAppExitW PROTO :DWORD,:DWORD
+			      C FatalExit PROTO :DWORD
+			      C FileTimeToDosDateTime PROTO :DWORD,:DWORD,:DWORD
+			      C FileTimeToLocalFileTime PROTO :DWORD,:DWORD
+			      C FileTimeToSystemTime PROTO :DWORD,:DWORD
+			      C FillConsoleOutputAttribute PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C FillConsoleOutputCharacterA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = FillConsoleOutputCharact   C FillConsoleOutputCharacter equ <FillConsoleOutputCharacterA>
+   erA
+			      C 
+			      C FillConsoleOutputCharacterW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C FindAtomA PROTO :DWORD
+ = FindAtomA		      C FindAtom equ <FindAtomA>
+			      C 
+			      C FindAtomW PROTO :DWORD
+			      C FindClose PROTO :DWORD
+			      C FindCloseChangeNotification PROTO :DWORD
+			      C FindFirstChangeNotificationA PROTO :DWORD,:DWORD,:DWORD
+ = FindFirstChangeNotificat   C FindFirstChangeNotification equ <FindFirstChangeNotificationA>
+   ionA
+			      C 
+			      C FindFirstChangeNotificationW PROTO :DWORD,:DWORD,:DWORD
+			      C FindFirstFileA PROTO :DWORD,:DWORD
+ = FindFirstFileA	      C FindFirstFile equ <FindFirstFileA>
+			      C 
+			      C FindFirstFileExA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = FindFirstFileExA	      C FindFirstFileEx equ <FindFirstFileExA>
+			      C 
+			      C FindFirstFileExW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C FindFirstFileW PROTO :DWORD,:DWORD
+			      C FindFirstVolumeA PROTO :DWORD,:DWORD
+ = FindFirstVolumeA	      C FindFirstVolume equ <FindFirstVolumeA>
+			      C 
+			      C FindFirstVolumeMountPointA PROTO :DWORD,:DWORD,:DWORD
+ = FindFirstVolumeMountPoin   C FindFirstVolumeMountPoint equ <FindFirstVolumeMountPointA>
+   tA
+			      C 
+			      C FindFirstVolumeMountPointW PROTO :DWORD,:DWORD,:DWORD
+			      C FindFirstVolumeW PROTO :DWORD,:DWORD
+			      C FindNextChangeNotification PROTO :DWORD
+			      C FindNextFileA PROTO :DWORD,:DWORD
+ = FindNextFileA	      C FindNextFile equ <FindNextFileA>
+			      C 
+			      C FindNextFileW PROTO :DWORD,:DWORD
+			      C FindNextVolumeA PROTO :DWORD,:DWORD,:DWORD
+ = FindNextVolumeA	      C FindNextVolume equ <FindNextVolumeA>
+			      C 
+			      C FindNextVolumeMountPointA PROTO :DWORD,:DWORD,:DWORD
+ = FindNextVolumeMountPoint   C FindNextVolumeMountPoint equ <FindNextVolumeMountPointA>
+   A
+			      C 
+			      C FindNextVolumeMountPointW PROTO :DWORD,:DWORD,:DWORD
+			      C FindNextVolumeW PROTO :DWORD,:DWORD,:DWORD
+			      C FindResourceA PROTO :DWORD,:DWORD,:DWORD
+ = FindResourceA	      C FindResource equ <FindResourceA>
+			      C 
+			      C FindResourceExA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = FindResourceExA	      C FindResourceEx equ <FindResourceExA>
+			      C 
+			      C FindResourceExW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C FindResourceW PROTO :DWORD,:DWORD,:DWORD
+			      C FindVolumeClose PROTO :DWORD
+			      C FindVolumeMountPointClose PROTO :DWORD
+			      C FlushConsoleInputBuffer PROTO :DWORD
+			      C FlushFileBuffers PROTO :DWORD
+			      C FlushInstructionCache PROTO :DWORD,:DWORD,:DWORD
+			      C FlushViewOfFile PROTO :DWORD,:DWORD
+			      C FoldStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = FoldStringA		      C FoldString equ <FoldStringA>
+			      C 
+			      C FoldStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C FormatMessageA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = FormatMessageA	      C FormatMessage equ <FormatMessageA>
+			      C 
+			      C FormatMessageW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C FreeConsole PROTO 
+			      C FreeEnvironmentStringsA PROTO :DWORD
+ = FreeEnvironmentStringsA    C FreeEnvironmentStrings equ <FreeEnvironmentStringsA>
+			      C 
+			      C FreeEnvironmentStringsW PROTO :DWORD
+			      C FreeLibrary PROTO :DWORD
+			      C FreeLibraryAndExitThread PROTO :DWORD,:DWORD
+			      C FreeResource PROTO :DWORD
+			      C FreeUserPhysicalPages PROTO :DWORD,:DWORD,:DWORD
+			      C GenerateConsoleCtrlEvent PROTO :DWORD,:DWORD
+			      C GetACP PROTO 
+			      C GetAtomNameA PROTO :DWORD,:DWORD,:DWORD
+ = GetAtomNameA		      C GetAtomName equ <GetAtomNameA>
+			      C 
+			      C GetAtomNameW PROTO :DWORD,:DWORD,:DWORD
+			      C GetBinaryTypeA PROTO :DWORD,:DWORD
+ = GetBinaryTypeA	      C GetBinaryType equ <GetBinaryTypeA>
+			      C 
+			      C GetBinaryTypeW PROTO :DWORD,:DWORD
+			      C GetCPInfo PROTO :DWORD,:DWORD
+			      C GetCPInfoExA PROTO :DWORD,:DWORD,:DWORD
+ = GetCPInfoExA		      C GetCPInfoEx equ <GetCPInfoExA>
+			      C 
+			      C GetCPInfoExW PROTO :DWORD,:DWORD,:DWORD
+			      C GetCalendarInfoA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetCalendarInfoA	      C GetCalendarInfo equ <GetCalendarInfoA>
+			      C 
+			      C GetCalendarInfoW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetCommConfig PROTO :DWORD,:DWORD,:DWORD
+			      C GetCommMask PROTO :DWORD,:DWORD
+			      C GetCommModemStatus PROTO :DWORD,:DWORD
+			      C GetCommProperties PROTO :DWORD,:DWORD
+			      C GetCommState PROTO :DWORD,:DWORD
+			      C GetCommTimeouts PROTO :DWORD,:DWORD
+			      C GetCommandLineA PROTO 
+ = GetCommandLineA	      C GetCommandLine equ <GetCommandLineA>
+			      C 
+			      C GetCommandLineW PROTO 
+			      C GetCompressedFileSizeA PROTO :DWORD,:DWORD
+ = GetCompressedFileSizeA     C GetCompressedFileSize equ <GetCompressedFileSizeA>
+			      C 
+			      C GetCompressedFileSizeW PROTO :DWORD,:DWORD
+			      C GetComputerNameA PROTO :DWORD,:DWORD
+ = GetComputerNameA	      C GetComputerName equ <GetComputerNameA>
+			      C 
+			      C GetComputerNameExA PROTO :DWORD,:DWORD,:DWORD
+ = GetComputerNameExA	      C GetComputerNameEx equ <GetComputerNameExA>
+			      C 
+			      C GetComputerNameExW PROTO :DWORD,:DWORD,:DWORD
+			      C GetComputerNameW PROTO :DWORD,:DWORD
+			      C GetConsoleCP PROTO 
+			      C GetConsoleCursorInfo PROTO :DWORD,:DWORD
+			      C GetConsoleMode PROTO :DWORD,:DWORD
+			      C GetConsoleOutputCP PROTO 
+			      C GetConsoleScreenBufferInfo PROTO :DWORD,:DWORD
+			      C GetConsoleTitleA PROTO :DWORD,:DWORD
+ = GetConsoleTitleA	      C GetConsoleTitle equ <GetConsoleTitleA>
+			      C 
+			      C GetConsoleTitleW PROTO :DWORD,:DWORD
+			      C GetCurrencyFormatA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetCurrencyFormatA	      C GetCurrencyFormat equ <GetCurrencyFormatA>
+			      C 
+			      C GetCurrencyFormatW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetCurrentDirectoryA PROTO :DWORD,:DWORD
+ = GetCurrentDirectoryA	      C GetCurrentDirectory equ <GetCurrentDirectoryA>
+			      C 
+			      C GetCurrentDirectoryW PROTO :DWORD,:DWORD
+			      C GetCurrentProcess PROTO 
+			      C GetCurrentProcessId PROTO 
+			      C GetCurrentThread PROTO 
+			      C GetCurrentThreadId PROTO 
+			      C GetDateFormatA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetDateFormatA	      C GetDateFormat equ <GetDateFormatA>
+			      C 
+			      C GetDateFormatW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetDefaultCommConfigA PROTO :DWORD,:DWORD,:DWORD
+ = GetDefaultCommConfigA      C GetDefaultCommConfig equ <GetDefaultCommConfigA>
+			      C 
+			      C GetDefaultCommConfigW PROTO :DWORD,:DWORD,:DWORD
+			      C GetDevicePowerState PROTO :DWORD,:DWORD
+			      C GetDiskFreeSpaceA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetDiskFreeSpaceA	      C GetDiskFreeSpace equ <GetDiskFreeSpaceA>
+			      C 
+			      C GetDiskFreeSpaceExA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = GetDiskFreeSpaceExA	      C GetDiskFreeSpaceEx equ <GetDiskFreeSpaceExA>
+			      C 
+			      C GetDiskFreeSpaceExW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C GetDiskFreeSpaceW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetDriveTypeA PROTO :DWORD
+ = GetDriveTypeA	      C GetDriveType equ <GetDriveTypeA>
+			      C 
+			      C GetDriveTypeW PROTO :DWORD
+			      C GetEnvironmentStringsA PROTO 
+ = GetEnvironmentStringsA     C GetEnvironmentStrings equ <GetEnvironmentStringsA>
+			      C 
+			      C GetEnvironmentStringsW PROTO 
+			      C GetEnvironmentVariableA PROTO :DWORD,:DWORD,:DWORD
+ = GetEnvironmentVariableA    C GetEnvironmentVariable equ <GetEnvironmentVariableA>
+			      C 
+			      C GetEnvironmentVariableW PROTO :DWORD,:DWORD,:DWORD
+			      C GetExitCodeProcess PROTO :DWORD,:DWORD
+			      C GetExitCodeThread PROTO :DWORD,:DWORD
+			      C GetFileAttributesA PROTO :DWORD
+ = GetFileAttributesA	      C GetFileAttributes equ <GetFileAttributesA>
+			      C 
+			      C GetFileAttributesExA PROTO :DWORD,:DWORD,:DWORD
+ = GetFileAttributesExA	      C GetFileAttributesEx equ <GetFileAttributesExA>
+			      C 
+			      C GetFileAttributesExW PROTO :DWORD,:DWORD,:DWORD
+			      C GetFileAttributesW PROTO :DWORD
+			      C GetFileInformationByHandle PROTO :DWORD,:DWORD
+			      C GetFileSize PROTO :DWORD,:DWORD
+			      C GetFileSizeEx PROTO :DWORD,:DWORD
+			      C GetFileTime PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C GetFileType PROTO :DWORD
+			      C GetFullPathNameA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = GetFullPathNameA	      C GetFullPathName equ <GetFullPathNameA>
+			      C 
+			      C GetFullPathNameW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C GetHandleInformation PROTO :DWORD,:DWORD
+			      C GetLargestConsoleWindowSize PROTO :DWORD
+			      C GetLastError PROTO 
+			      C GetLocalTime PROTO :DWORD
+			      C GetLocaleInfoA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = GetLocaleInfoA	      C GetLocaleInfo equ <GetLocaleInfoA>
+			      C 
+			      C GetLocaleInfoW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C GetLogicalDriveStringsA PROTO :DWORD,:DWORD
+ = GetLogicalDriveStringsA    C GetLogicalDriveStrings equ <GetLogicalDriveStringsA>
+			      C 
+			      C GetLogicalDriveStringsW PROTO :DWORD,:DWORD
+			      C GetLogicalDrives PROTO 
+			      C GetLongPathNameA PROTO :DWORD,:DWORD,:DWORD
+ = GetLongPathNameA	      C GetLongPathName equ <GetLongPathNameA>
+			      C 
+			      C GetLongPathNameW PROTO :DWORD,:DWORD,:DWORD
+			      C GetMailslotInfo PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetModuleFileNameA PROTO :DWORD,:DWORD,:DWORD
+ = GetModuleFileNameA	      C GetModuleFileName equ <GetModuleFileNameA>
+			      C 
+			      C GetModuleFileNameW PROTO :DWORD,:DWORD,:DWORD
+			      C GetModuleHandleA PROTO :DWORD
+ = GetModuleHandleA	      C GetModuleHandle equ <GetModuleHandleA>
+			      C 
+			      C GetModuleHandleW PROTO :DWORD
+			      C GetNamedPipeHandleStateA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetNamedPipeHandleStateA   C GetNamedPipeHandleState equ <GetNamedPipeHandleStateA>
+			      C 
+			      C GetNamedPipeHandleStateW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetNamedPipeInfo PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetNumberFormatA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetNumberFormatA	      C GetNumberFormat equ <GetNumberFormatA>
+			      C 
+			      C GetNumberFormatW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetNumberOfConsoleInputEvents PROTO :DWORD,:DWORD
+			      C GetNumberOfConsoleMouseButtons PROTO :DWORD
+			      C GetOEMCP PROTO 
+			      C GetOverlappedResult PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C GetPriorityClass PROTO :DWORD
+			      C GetPrivateProfileIntA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = GetPrivateProfileIntA      C GetPrivateProfileInt equ <GetPrivateProfileIntA>
+			      C 
+			      C GetPrivateProfileIntW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C GetPrivateProfileSectionA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = GetPrivateProfileSection   C GetPrivateProfileSection equ <GetPrivateProfileSectionA>
+   A
+			      C 
+			      C GetPrivateProfileSectionNamesA PROTO :DWORD,:DWORD,:DWORD
+ = GetPrivateProfileSection   C GetPrivateProfileSectionNames equ <GetPrivateProfileSectionNamesA>
+   NamesA
+			      C 
+			      C GetPrivateProfileSectionNamesW PROTO :DWORD,:DWORD,:DWORD
+			      C GetPrivateProfileSectionW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C GetPrivateProfileStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetPrivateProfileStringA   C GetPrivateProfileString equ <GetPrivateProfileStringA>
+			      C 
+			      C GetPrivateProfileStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetPrivateProfileStructA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetPrivateProfileStructA   C GetPrivateProfileStruct equ <GetPrivateProfileStructA>
+			      C 
+			      C GetPrivateProfileStructW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetProcAddress PROTO :DWORD,:DWORD
+			      C GetProcessAffinityMask PROTO :DWORD,:DWORD,:DWORD
+			      C GetProcessHeap PROTO 
+			      C GetProcessHeaps PROTO :DWORD,:DWORD
+			      C GetProcessIoCounters PROTO :DWORD,:DWORD
+			      C GetProcessPriorityBoost PROTO :DWORD,:DWORD
+			      C GetProcessShutdownParameters PROTO :DWORD,:DWORD
+			      C GetProcessTimes PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetProcessVersion PROTO :DWORD
+			      C GetProcessWorkingSetSize PROTO :DWORD,:DWORD,:DWORD
+			      C GetProfileIntA PROTO :DWORD,:DWORD,:DWORD
+ = GetProfileIntA	      C GetProfileInt equ <GetProfileIntA>
+			      C 
+			      C GetProfileIntW PROTO :DWORD,:DWORD,:DWORD
+			      C GetProfileSectionA PROTO :DWORD,:DWORD,:DWORD
+ = GetProfileSectionA	      C GetProfileSection equ <GetProfileSectionA>
+			      C 
+			      C GetProfileSectionW PROTO :DWORD,:DWORD,:DWORD
+			      C GetProfileStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetProfileStringA	      C GetProfileString equ <GetProfileStringA>
+			      C 
+			      C GetProfileStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetQueuedCompletionStatus PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetShortPathNameA PROTO :DWORD,:DWORD,:DWORD
+ = GetShortPathNameA	      C GetShortPathName equ <GetShortPathNameA>
+			      C 
+			      C GetShortPathNameW PROTO :DWORD,:DWORD,:DWORD
+			      C GetStartupInfoA PROTO :DWORD
+ = GetStartupInfoA	      C GetStartupInfo equ <GetStartupInfoA>
+			      C 
+			      C GetStartupInfoW PROTO :DWORD
+			      C GetStdHandle PROTO :DWORD
+			      C GetStringTypeA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetStringTypeA	      C GetStringType equ <GetStringTypeA>
+			      C 
+			      C GetStringTypeExA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetStringTypeExA	      C GetStringTypeEx equ <GetStringTypeExA>
+			      C 
+			      C GetStringTypeExW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetStringTypeW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C GetSystemDefaultLCID PROTO 
+			      C GetSystemDefaultLangID PROTO 
+			      C GetSystemDefaultUILanguage PROTO 
+			      C GetSystemDirectoryA PROTO :DWORD,:DWORD
+ = GetSystemDirectoryA	      C GetSystemDirectory equ <GetSystemDirectoryA>
+			      C 
+			      C GetSystemDirectoryW PROTO :DWORD,:DWORD
+			      C GetSystemInfo PROTO :DWORD
+			      C GetSystemPowerStatus PROTO :DWORD
+			      C GetSystemTime PROTO :DWORD
+			      C GetSystemTimeAdjustment PROTO :DWORD,:DWORD,:DWORD
+			      C GetSystemTimeAsFileTime PROTO :DWORD
+			      C GetSystemWindowsDirectoryA PROTO :DWORD,:DWORD
+ = GetSystemWindowsDirector   C GetSystemWindowsDirectory equ <GetSystemWindowsDirectoryA>
+   yA
+			      C 
+			      C GetSystemWindowsDirectoryW PROTO :DWORD,:DWORD
+			      C GetTapeParameters PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C GetTapePosition PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetTapeStatus PROTO :DWORD
+			      C GetTempFileNameA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = GetTempFileNameA	      C GetTempFileName equ <GetTempFileNameA>
+			      C 
+			      C GetTempFileNameW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C GetTempPathA PROTO :DWORD,:DWORD
+ = GetTempPathA		      C GetTempPath equ <GetTempPathA>
+			      C 
+			      C GetTempPathW PROTO :DWORD,:DWORD
+			      C GetThreadContext PROTO :DWORD,:DWORD
+			      C GetThreadLocale PROTO 
+			      C GetThreadPriority PROTO :DWORD
+			      C GetThreadPriorityBoost PROTO :DWORD,:DWORD
+			      C GetThreadSelectorEntry PROTO :DWORD,:DWORD,:DWORD
+			      C GetThreadTimes PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetTickCount PROTO 
+			      C GetTimeFormatA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetTimeFormatA	      C GetTimeFormat equ <GetTimeFormatA>
+			      C 
+			      C GetTimeFormatW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetTimeZoneInformation PROTO :DWORD
+			      C GetUserDefaultLCID PROTO 
+			      C GetUserDefaultLangID PROTO 
+			      C GetUserDefaultUILanguage PROTO 
+			      C GetVersion PROTO 
+			      C GetVersionExA PROTO :DWORD
+ = GetVersionExA	      C GetVersionEx equ <GetVersionExA>
+			      C 
+			      C GetVersionExW PROTO :DWORD
+			      C GetVolumeInformationA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = GetVolumeInformationA      C GetVolumeInformation equ <GetVolumeInformationA>
+			      C 
+			      C GetVolumeInformationW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GetVolumeNameForVolumeMountPointA PROTO :DWORD,:DWORD,:DWORD
+ = GetVolumeNameForVolumeMo   C GetVolumeNameForVolumeMountPoint equ <GetVolumeNameForVolumeMountPointA>
+   untPointA
+			      C 
+			      C GetVolumeNameForVolumeMountPointW PROTO :DWORD,:DWORD,:DWORD
+			      C GetVolumePathNameA PROTO :DWORD,:DWORD,:DWORD
+ = GetVolumePathNameA	      C GetVolumePathName equ <GetVolumePathNameA>
+			      C 
+			      C GetVolumePathNameW PROTO :DWORD,:DWORD,:DWORD
+			      C GetWindowsDirectoryA PROTO :DWORD,:DWORD
+ = GetWindowsDirectoryA	      C GetWindowsDirectory equ <GetWindowsDirectoryA>
+			      C 
+			      C GetWindowsDirectoryW PROTO :DWORD,:DWORD
+			      C GetWriteWatch PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C GlobalAddAtomA PROTO :DWORD
+ = GlobalAddAtomA	      C GlobalAddAtom equ <GlobalAddAtomA>
+			      C 
+			      C GlobalAddAtomW PROTO :DWORD
+			      C GlobalAlloc PROTO :DWORD,:DWORD
+			      C GlobalCompact PROTO :DWORD
+			      C GlobalDeleteAtom PROTO :DWORD
+			      C GlobalFindAtomA PROTO :DWORD
+ = GlobalFindAtomA	      C GlobalFindAtom equ <GlobalFindAtomA>
+			      C 
+			      C GlobalFindAtomW PROTO :DWORD
+			      C GlobalFix PROTO :DWORD
+			      C GlobalFlags PROTO :DWORD
+			      C GlobalFree PROTO :DWORD
+			      C GlobalGetAtomNameA PROTO :DWORD,:DWORD,:DWORD
+ = GlobalGetAtomNameA	      C GlobalGetAtomName equ <GlobalGetAtomNameA>
+			      C 
+			      C GlobalGetAtomNameW PROTO :DWORD,:DWORD,:DWORD
+			      C GlobalHandle PROTO :DWORD
+			      C GlobalLock PROTO :DWORD
+			      C GlobalMemoryStatus PROTO :DWORD
+			      C GlobalMemoryStatusEx PROTO :DWORD
+			      C GlobalReAlloc PROTO :DWORD,:DWORD,:DWORD
+			      C GlobalSize PROTO :DWORD
+			      C GlobalUnWire PROTO :DWORD
+			      C GlobalUnfix PROTO :DWORD
+			      C GlobalUnlock PROTO :DWORD
+			      C GlobalWire PROTO :DWORD
+			      C Heap32First PROTO :DWORD,:DWORD,:DWORD
+			      C Heap32ListFirst PROTO :DWORD,:DWORD
+			      C Heap32ListNext PROTO :DWORD,:DWORD
+			      C Heap32Next PROTO :DWORD
+			      C HeapAlloc PROTO :DWORD,:DWORD,:DWORD
+			      C HeapCompact PROTO :DWORD,:DWORD
+			      C HeapCreate PROTO :DWORD,:DWORD,:DWORD
+			      C HeapDestroy PROTO :DWORD
+			      C HeapFree PROTO :DWORD,:DWORD,:DWORD
+			      C HeapLock PROTO :DWORD
+			      C HeapReAlloc PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C HeapSize PROTO :DWORD,:DWORD,:DWORD
+			      C HeapUnlock PROTO :DWORD
+			      C HeapValidate PROTO :DWORD,:DWORD,:DWORD
+			      C HeapWalk PROTO :DWORD,:DWORD
+			      C InitAtomTable PROTO :DWORD
+			      C InitializeCriticalSection PROTO :DWORD
+			      C InitializeCriticalSectionAndSpinCount PROTO :DWORD,:DWORD
+			      C InterlockedCompareExchange PROTO :DWORD,:DWORD,:DWORD
+			      C InterlockedDecrement PROTO :DWORD
+			      C InterlockedExchange PROTO :DWORD,:DWORD
+			      C InterlockedExchangeAdd PROTO :DWORD,:DWORD
+			      C InterlockedIncrement PROTO :DWORD
+			      C IsBadCodePtr PROTO :DWORD
+			      C IsBadHugeReadPtr PROTO :DWORD,:DWORD
+			      C IsBadHugeWritePtr PROTO :DWORD,:DWORD
+			      C IsBadReadPtr PROTO :DWORD,:DWORD
+			      C IsBadStringPtrA PROTO :DWORD,:DWORD
+ = IsBadStringPtrA	      C IsBadStringPtr equ <IsBadStringPtrA>
+			      C 
+			      C IsBadStringPtrW PROTO :DWORD,:DWORD
+			      C IsBadWritePtr PROTO :DWORD,:DWORD
+			      C IsDBCSLeadByte PROTO :DWORD
+			      C IsDBCSLeadByteEx PROTO :DWORD,:DWORD
+			      C IsDebuggerPresent PROTO 
+			      C IsProcessorFeaturePresent PROTO :DWORD
+			      C IsSystemResumeAutomatic PROTO 
+			      C IsValidCodePage PROTO :DWORD
+			      C IsValidLanguageGroup PROTO :DWORD,:DWORD
+			      C IsValidLocale PROTO :DWORD,:DWORD
+			      C LCMapStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = LCMapStringA		      C LCMapString equ <LCMapStringA>
+			      C 
+			      C LCMapStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C LeaveCriticalSection PROTO :DWORD
+			      C LoadLibraryA PROTO :DWORD
+ = LoadLibraryA		      C LoadLibrary equ <LoadLibraryA>
+			      C 
+			      C LoadLibraryExA PROTO :DWORD,:DWORD,:DWORD
+ = LoadLibraryExA	      C LoadLibraryEx equ <LoadLibraryExA>
+			      C 
+			      C LoadLibraryExW PROTO :DWORD,:DWORD,:DWORD
+			      C LoadLibraryW PROTO :DWORD
+			      C LoadModule PROTO :DWORD,:DWORD
+			      C LoadResource PROTO :DWORD,:DWORD
+			      C LocalAlloc PROTO :DWORD,:DWORD
+			      C LocalCompact PROTO :DWORD
+			      C LocalFileTimeToFileTime PROTO :DWORD,:DWORD
+			      C LocalFlags PROTO :DWORD
+			      C LocalFree PROTO :DWORD
+			      C LocalHandle PROTO :DWORD
+			      C LocalLock PROTO :DWORD
+			      C LocalReAlloc PROTO :DWORD,:DWORD,:DWORD
+			      C LocalShrink PROTO :DWORD,:DWORD
+			      C LocalSize PROTO :DWORD
+			      C LocalUnlock PROTO :DWORD
+			      C LockFile PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C LockFileEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C LockResource PROTO :DWORD
+			      C MapUserPhysicalPages PROTO :DWORD,:DWORD,:DWORD
+			      C MapUserPhysicalPagesScatter PROTO :DWORD,:DWORD,:DWORD
+			      C MapViewOfFile PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C MapViewOfFileEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C Module32First PROTO :DWORD,:DWORD
+			      C Module32FirstW PROTO :DWORD,:DWORD
+			      C Module32Next PROTO :DWORD,:DWORD
+			      C Module32NextW PROTO :DWORD,:DWORD
+			      C MoveFileA PROTO :DWORD,:DWORD
+ = MoveFileA		      C MoveFile equ <MoveFileA>
+			      C 
+			      C MoveFileExA PROTO :DWORD,:DWORD,:DWORD
+ = MoveFileExA		      C MoveFileEx equ <MoveFileExA>
+			      C 
+			      C MoveFileExW PROTO :DWORD,:DWORD,:DWORD
+			      C MoveFileW PROTO :DWORD,:DWORD
+			      C MoveFileWithProgressA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = MoveFileWithProgressA      C MoveFileWithProgress equ <MoveFileWithProgressA>
+			      C 
+			      C MoveFileWithProgressW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C MulDiv PROTO :DWORD,:DWORD,:DWORD
+			      C MultiByteToWideChar PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C OpenEventA PROTO :DWORD,:DWORD,:DWORD
+ = OpenEventA		      C OpenEvent equ <OpenEventA>
+			      C 
+			      C OpenEventW PROTO :DWORD,:DWORD,:DWORD
+			      C OpenFile PROTO :DWORD,:DWORD,:DWORD
+			      C OpenFileMappingA PROTO :DWORD,:DWORD,:DWORD
+ = OpenFileMappingA	      C OpenFileMapping equ <OpenFileMappingA>
+			      C 
+			      C OpenFileMappingW PROTO :DWORD,:DWORD,:DWORD
+			      C OpenJobObjectA PROTO :DWORD,:DWORD,:DWORD
+ = OpenJobObjectA	      C OpenJobObject equ <OpenJobObjectA>
+			      C 
+			      C OpenJobObjectW PROTO :DWORD,:DWORD,:DWORD
+			      C OpenMutexA PROTO :DWORD,:DWORD,:DWORD
+ = OpenMutexA		      C OpenMutex equ <OpenMutexA>
+			      C 
+			      C OpenMutexW PROTO :DWORD,:DWORD,:DWORD
+			      C OpenProcess PROTO :DWORD,:DWORD,:DWORD
+			      C OpenSemaphoreA PROTO :DWORD,:DWORD,:DWORD
+ = OpenSemaphoreA	      C OpenSemaphore equ <OpenSemaphoreA>
+			      C 
+			      C OpenSemaphoreW PROTO :DWORD,:DWORD,:DWORD
+			      C OpenThread PROTO :DWORD,:DWORD,:DWORD
+			      C OpenWaitableTimerA PROTO :DWORD,:DWORD,:DWORD
+ = OpenWaitableTimerA	      C OpenWaitableTimer equ <OpenWaitableTimerA>
+			      C 
+			      C OpenWaitableTimerW PROTO :DWORD,:DWORD,:DWORD
+			      C OutputDebugStringA PROTO :DWORD
+ = OutputDebugStringA	      C OutputDebugString equ <OutputDebugStringA>
+			      C 
+			      C OutputDebugStringW PROTO :DWORD
+			      C PeekConsoleInputA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = PeekConsoleInputA	      C PeekConsoleInput equ <PeekConsoleInputA>
+			      C 
+			      C PeekConsoleInputW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C PeekNamedPipe PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C PostQueuedCompletionStatus PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C PrepareTape PROTO :DWORD,:DWORD,:DWORD
+			      C Process32First PROTO :DWORD,:DWORD
+			      C Process32FirstW PROTO :DWORD,:DWORD
+			      C Process32Next PROTO :DWORD,:DWORD
+			      C Process32NextW PROTO :DWORD,:DWORD
+			      C ProcessIdToSessionId PROTO :DWORD,:DWORD
+			      C PulseEvent PROTO :DWORD
+			      C PurgeComm PROTO :DWORD,:DWORD
+			      C QueryDosDeviceA PROTO :DWORD,:DWORD,:DWORD
+ = QueryDosDeviceA	      C QueryDosDevice equ <QueryDosDeviceA>
+			      C 
+			      C QueryDosDeviceW PROTO :DWORD,:DWORD,:DWORD
+			      C QueryInformationJobObject PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C QueryPerformanceCounter PROTO :DWORD
+			      C QueryPerformanceFrequency PROTO :DWORD
+			      C QueueUserAPC PROTO :DWORD,:DWORD,:DWORD
+			      C QueueUserWorkItem PROTO :DWORD,:DWORD,:DWORD
+			      C RaiseException PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C ReadConsoleA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = ReadConsoleA		      C ReadConsole equ <ReadConsoleA>
+			      C 
+			      C ReadConsoleInputA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = ReadConsoleInputA	      C ReadConsoleInput equ <ReadConsoleInputA>
+			      C 
+			      C ReadConsoleInputW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C ReadConsoleOutputA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = ReadConsoleOutputA	      C ReadConsoleOutput equ <ReadConsoleOutputA>
+			      C 
+			      C ReadConsoleOutputAttribute PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C ReadConsoleOutputCharacterA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = ReadConsoleOutputCharact   C ReadConsoleOutputCharacter equ <ReadConsoleOutputCharacterA>
+   erA
+			      C 
+			      C ReadConsoleOutputCharacterW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C ReadConsoleOutputW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C ReadConsoleW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C ReadDirectoryChangesW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C ReadFile PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C ReadFileEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C ReadFileScatter PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C ReadProcessMemory PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C RegisterWaitForSingleObject PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C RegisterWaitForSingleObjectEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C ReleaseMutex PROTO :DWORD
+			      C ReleaseSemaphore PROTO :DWORD,:DWORD,:DWORD
+			      C RemoveDirectoryA PROTO :DWORD
+ = RemoveDirectoryA	      C RemoveDirectory equ <RemoveDirectoryA>
+			      C 
+			      C RemoveDirectoryW PROTO :DWORD
+			      C ReplaceFileA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = ReplaceFileA		      C ReplaceFile equ <ReplaceFileA>
+			      C 
+			      C ReplaceFileW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C RequestDeviceWakeup PROTO :DWORD
+			      C RequestWakeupLatency PROTO :DWORD
+			      C ResetEvent PROTO :DWORD
+			      C ResetWriteWatch PROTO :DWORD,:DWORD
+			      C ResumeThread PROTO :DWORD
+			      C RtlFillMemory PROTO :DWORD,:DWORD,:DWORD
+			      C RtlMoveMemory PROTO :DWORD,:DWORD,:DWORD
+			      C RtlUnwind PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C RtlZeroMemory PROTO :DWORD,:DWORD
+			      C ScrollConsoleScreenBufferA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = ScrollConsoleScreenBuffe   C ScrollConsoleScreenBuffer equ <ScrollConsoleScreenBufferA>
+   rA
+			      C 
+			      C ScrollConsoleScreenBufferW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C SearchPathA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = SearchPathA		      C SearchPath equ <SearchPathA>
+			      C 
+			      C SearchPathW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C SetCalendarInfoA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = SetCalendarInfoA	      C SetCalendarInfo equ <SetCalendarInfoA>
+			      C 
+			      C SetCalendarInfoW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C SetCommBreak PROTO :DWORD
+			      C SetCommConfig PROTO :DWORD,:DWORD,:DWORD
+			      C SetCommMask PROTO :DWORD,:DWORD
+			      C SetCommState PROTO :DWORD,:DWORD
+			      C SetCommTimeouts PROTO :DWORD,:DWORD
+			      C SetComputerNameA PROTO :DWORD
+ = SetComputerNameA	      C SetComputerName equ <SetComputerNameA>
+			      C 
+			      C SetComputerNameExA PROTO :DWORD,:DWORD
+ = SetComputerNameExA	      C SetComputerNameEx equ <SetComputerNameExA>
+			      C 
+			      C SetComputerNameExW PROTO :DWORD,:DWORD
+			      C SetComputerNameW PROTO :DWORD
+			      C SetConsoleActiveScreenBuffer PROTO :DWORD
+			      C SetConsoleCP PROTO :DWORD
+			      C SetConsoleCtrlHandler PROTO :DWORD,:DWORD
+			      C SetConsoleCursor PROTO :DWORD,:DWORD
+			      C SetConsoleCursorInfo PROTO :DWORD,:DWORD
+			      C SetConsoleCursorPosition PROTO :DWORD,:DWORD
+			      C SetConsoleMode PROTO :DWORD,:DWORD
+			      C SetConsoleOutputCP PROTO :DWORD
+			      C SetConsoleScreenBufferSize PROTO :DWORD,:DWORD
+			      C SetConsoleTextAttribute PROTO :DWORD,:DWORD
+			      C SetConsoleTitleA PROTO :DWORD
+ = SetConsoleTitleA	      C SetConsoleTitle equ <SetConsoleTitleA>
+			      C 
+			      C SetConsoleTitleW PROTO :DWORD
+			      C SetConsoleWindowInfo PROTO :DWORD,:DWORD,:DWORD
+			      C SetCriticalSectionSpinCount PROTO :DWORD,:DWORD
+			      C SetCurrentDirectoryA PROTO :DWORD
+ = SetCurrentDirectoryA	      C SetCurrentDirectory equ <SetCurrentDirectoryA>
+			      C 
+			      C SetCurrentDirectoryW PROTO :DWORD
+			      C SetDefaultCommConfigA PROTO :DWORD,:DWORD,:DWORD
+ = SetDefaultCommConfigA      C SetDefaultCommConfig equ <SetDefaultCommConfigA>
+			      C 
+			      C SetDefaultCommConfigW PROTO :DWORD,:DWORD,:DWORD
+			      C SetEndOfFile PROTO :DWORD
+			      C SetEnvironmentVariableA PROTO :DWORD,:DWORD
+ = SetEnvironmentVariableA    C SetEnvironmentVariable equ <SetEnvironmentVariableA>
+			      C 
+			      C SetEnvironmentVariableW PROTO :DWORD,:DWORD
+			      C SetErrorMode PROTO :DWORD
+			      C SetEvent PROTO :DWORD
+			      C SetFileApisToANSI PROTO 
+			      C SetFileApisToOEM PROTO 
+			      C SetFileAttributesA PROTO :DWORD,:DWORD
+ = SetFileAttributesA	      C SetFileAttributes equ <SetFileAttributesA>
+			      C 
+			      C SetFileAttributesW PROTO :DWORD,:DWORD
+			      C SetFilePointer PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C SetFilePointerEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C SetFileTime PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C SetHandleCount PROTO :DWORD
+			      C SetHandleInformation PROTO :DWORD,:DWORD,:DWORD
+			      C SetInformationJobObject PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C SetLastError PROTO :DWORD
+			      C SetLocalTime PROTO :DWORD
+			      C SetLocaleInfoA PROTO :DWORD,:DWORD,:DWORD
+ = SetLocaleInfoA	      C SetLocaleInfo equ <SetLocaleInfoA>
+			      C 
+			      C SetLocaleInfoW PROTO :DWORD,:DWORD,:DWORD
+			      C SetMailslotInfo PROTO :DWORD,:DWORD
+			      C SetMessageWaitingIndicator PROTO :DWORD,:DWORD
+			      C SetNamedPipeHandleState PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C SetPriorityClass PROTO :DWORD,:DWORD
+			      C SetProcessAffinityMask PROTO :DWORD,:DWORD
+			      C SetProcessPriorityBoost PROTO :DWORD,:DWORD
+			      C SetProcessShutdownParameters PROTO :DWORD,:DWORD
+			      C SetProcessWorkingSetSize PROTO :DWORD,:DWORD,:DWORD
+			      C SetStdHandle PROTO :DWORD,:DWORD
+			      C SetSystemPowerState PROTO :DWORD,:DWORD
+			      C SetSystemTime PROTO :DWORD
+			      C SetSystemTimeAdjustment PROTO :DWORD,:DWORD
+			      C SetTapeParameters PROTO :DWORD,:DWORD,:DWORD
+			      C SetTapePosition PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C SetThreadAffinityMask PROTO :DWORD,:DWORD
+			      C SetThreadContext PROTO :DWORD,:DWORD
+			      C SetThreadExecutionState PROTO :DWORD
+			      C SetThreadIdealProcessor PROTO :DWORD,:DWORD
+			      C SetThreadLocale PROTO :DWORD
+			      C SetThreadPriority PROTO :DWORD,:DWORD
+			      C SetThreadPriorityBoost PROTO :DWORD,:DWORD
+			      C SetTimeZoneInformation PROTO :DWORD
+			      C SetTimerQueueTimer PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C SetUnhandledExceptionFilter PROTO :DWORD
+			      C SetVolumeLabelA PROTO :DWORD,:DWORD
+ = SetVolumeLabelA	      C SetVolumeLabel equ <SetVolumeLabelA>
+			      C 
+			      C SetVolumeLabelW PROTO :DWORD,:DWORD
+			      C SetVolumeMountPointA PROTO :DWORD,:DWORD
+ = SetVolumeMountPointA	      C SetVolumeMountPoint equ <SetVolumeMountPointA>
+			      C 
+			      C SetVolumeMountPointW PROTO :DWORD,:DWORD
+			      C SetWaitableTimer PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C SetupComm PROTO :DWORD,:DWORD,:DWORD
+			      C SignalObjectAndWait PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C SizeofResource PROTO :DWORD,:DWORD
+			      C Sleep PROTO :DWORD
+			      C SleepEx PROTO :DWORD,:DWORD
+			      C SuspendThread PROTO :DWORD
+			      C SwitchToFiber PROTO :DWORD
+			      C SwitchToThread PROTO 
+			      C SystemTimeToFileTime PROTO :DWORD,:DWORD
+			      C SystemTimeToTzSpecificLocalTime PROTO :DWORD,:DWORD,:DWORD
+			      C TerminateJobObject PROTO :DWORD,:DWORD
+			      C TerminateProcess PROTO :DWORD,:DWORD
+			      C TerminateThread PROTO :DWORD,:DWORD
+			      C Thread32First PROTO :DWORD,:DWORD
+			      C Thread32Next PROTO :DWORD,:DWORD
+			      C TlsAlloc PROTO 
+			      C TlsFree PROTO :DWORD
+			      C TlsGetValue PROTO :DWORD
+			      C TlsSetValue PROTO :DWORD,:DWORD
+			      C Toolhelp32ReadProcessMemory PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C TransactNamedPipe PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C TransmitCommChar PROTO :DWORD,:DWORD
+			      C TryEnterCriticalSection PROTO :DWORD
+			      C UnhandledExceptionFilter PROTO :DWORD
+			      C UnlockFile PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C UnlockFileEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C UnmapViewOfFile PROTO :DWORD
+			      C UnregisterWait PROTO :DWORD
+			      C UnregisterWaitEx PROTO :DWORD,:DWORD
+			      C UpdateResourceA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = UpdateResourceA	      C UpdateResource equ <UpdateResourceA>
+			      C 
+			      C UpdateResourceW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C VerLanguageNameA PROTO :DWORD,:DWORD,:DWORD
+ = VerLanguageNameA	      C VerLanguageName equ <VerLanguageNameA>
+			      C 
+			      C VerLanguageNameW PROTO :DWORD,:DWORD,:DWORD
+			      C VerSetConditionMask PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C VerifyVersionInfoA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = VerifyVersionInfoA	      C VerifyVersionInfo equ <VerifyVersionInfoA>
+			      C 
+			      C VerifyVersionInfoW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C VirtualAlloc PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C VirtualAllocEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C VirtualFree PROTO :DWORD,:DWORD,:DWORD
+			      C VirtualFreeEx PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C VirtualLock PROTO :DWORD,:DWORD
+			      C VirtualProtect PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C VirtualProtectEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C VirtualQuery PROTO :DWORD,:DWORD,:DWORD
+			      C VirtualQueryEx PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C VirtualUnlock PROTO :DWORD,:DWORD
+			      C WaitCommEvent PROTO :DWORD,:DWORD,:DWORD
+			      C WaitForDebugEvent PROTO :DWORD,:DWORD
+			      C WaitForMultipleObjects PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C WaitForMultipleObjectsEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WaitForSingleObject PROTO :DWORD,:DWORD
+			      C WaitForSingleObjectEx PROTO :DWORD,:DWORD,:DWORD
+			      C WaitNamedPipeA PROTO :DWORD,:DWORD
+ = WaitNamedPipeA	      C WaitNamedPipe equ <WaitNamedPipeA>
+			      C 
+			      C WaitNamedPipeW PROTO :DWORD,:DWORD
+			      C WideCharToMultiByte PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WinExec PROTO :DWORD,:DWORD
+			      C WriteConsoleA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = WriteConsoleA	      C WriteConsole equ <WriteConsoleA>
+			      C 
+			      C WriteConsoleInputA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = WriteConsoleInputA	      C WriteConsoleInput equ <WriteConsoleInputA>
+			      C 
+			      C WriteConsoleInputW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C WriteConsoleOutputA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = WriteConsoleOutputA	      C WriteConsoleOutput equ <WriteConsoleOutputA>
+			      C 
+			      C WriteConsoleOutputAttribute PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WriteConsoleOutputCharacterA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = WriteConsoleOutputCharac   C WriteConsoleOutputCharacter equ <WriteConsoleOutputCharacterA>
+   terA
+			      C 
+			      C WriteConsoleOutputCharacterW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WriteConsoleOutputW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WriteConsoleW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WriteFile PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WriteFileEx PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WriteFileGather PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WritePrivateProfileSectionA PROTO :DWORD,:DWORD,:DWORD
+ = WritePrivateProfileSecti   C WritePrivateProfileSection equ <WritePrivateProfileSectionA>
+   onA
+			      C 
+			      C WritePrivateProfileSectionW PROTO :DWORD,:DWORD,:DWORD
+			      C WritePrivateProfileStringA PROTO :DWORD,:DWORD,:DWORD,:DWORD
+ = WritePrivateProfileStrin   C WritePrivateProfileString equ <WritePrivateProfileStringA>
+   gA
+			      C 
+			      C WritePrivateProfileStringW PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C WritePrivateProfileStructA PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+ = WritePrivateProfileStruc   C WritePrivateProfileStruct equ <WritePrivateProfileStructA>
+   tA
+			      C 
+			      C WritePrivateProfileStructW PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WriteProcessMemory PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD
+			      C WriteProfileSectionA PROTO :DWORD,:DWORD
+ = WriteProfileSectionA	      C WriteProfileSection equ <WriteProfileSectionA>
+			      C 
+			      C WriteProfileSectionW PROTO :DWORD,:DWORD
+			      C WriteProfileStringA PROTO :DWORD,:DWORD,:DWORD
+ = WriteProfileStringA	      C WriteProfileString equ <WriteProfileStringA>
+			      C 
+			      C WriteProfileStringW PROTO :DWORD,:DWORD,:DWORD
+			      C WriteTapemark PROTO :DWORD,:DWORD,:DWORD,:DWORD
+			      C _hread PROTO :DWORD,:DWORD,:DWORD
+			      C _hwrite PROTO :DWORD,:DWORD,:DWORD
+			      C _lclose PROTO :DWORD
+			      C _lcreat PROTO :DWORD,:DWORD
+			      C _llseek PROTO :DWORD,:DWORD,:DWORD
+			      C _lopen PROTO :DWORD,:DWORD
+			      C _lread PROTO :DWORD,:DWORD,:DWORD
+			      C _lwrite PROTO :DWORD,:DWORD,:DWORD
+			      C lstrcatA PROTO :DWORD,:DWORD
+ = lstrcatA		      C lstrcat equ <lstrcatA>
+			      C 
+			      C lstrcatW PROTO :DWORD,:DWORD
+			      C lstrcmpA PROTO :DWORD,:DWORD
+ = lstrcmpA		      C lstrcmp equ <lstrcmpA>
+			      C 
+			      C lstrcmpW PROTO :DWORD,:DWORD
+			      C lstrcmpiA PROTO :DWORD,:DWORD
+ = lstrcmpiA		      C lstrcmpi equ <lstrcmpiA>
+			      C 
+			      C lstrcmpiW PROTO :DWORD,:DWORD
+			      C lstrcpyA PROTO :DWORD,:DWORD
+ = lstrcpyA		      C lstrcpy equ <lstrcpyA>
+			      C 
+			      C lstrcpyW PROTO :DWORD,:DWORD
+			      C lstrcpynA PROTO :DWORD,:DWORD,:DWORD
+ = lstrcpynA		      C lstrcpyn equ <lstrcpynA>
+			      C 
+			      C lstrcpynW PROTO :DWORD,:DWORD,:DWORD
+			      C lstrlenA PROTO :DWORD
+ = lstrlenA		      C lstrlen equ <lstrlenA>
+			      C 
+			      C lstrlenW PROTO :DWORD
+			      C 
+				includelib masm32.lib
+				includelib kernel32.lib
+
+				;Условие, вариант 17:
+				;Задано число x 0 и функции f(x), g(x), h(x). Пусть
+				;x1 = f(x0)     x2 = f(x1)      x3 = g(x2)      x4 = h(x3)
+				;x5 = g(x4)     x6 = g(x5)      x7 = h(x6)      x8 = f(x7)
+				;x9 = h(x8)     x10 = h(x9)     x11 = h(x10)    x12 = h(x11)
+				;x13 = g(x12)   x14 = f(x13)    x15 = f(x14)    x16 = h(x15)
+				;Требуется вычислить 16x при f(x) = 3x - 5, g(x) = 3x + 12, h(x) = 3x
+				;Вычисление функций оформить в виде макроопределения с параметром-
+				;константой. Если аргумент отсутствует, то команду сложения не генерировать.
+				;Выбор функции организовать с помощью логической шкалы.
+
+
+				;Результаты для тестов:
+				; x = 1; res = -30678972
+				; х = 0; res =  -73725693
+				; x = 2; res =  12367749
+				; x = 9; res = 313694796
+				; x = -9; res = -461146182
+				; x = -1; res = -116772414
+				;Числа в процессе вычисления не должны выходить за пределы двойного слова
+
+				;Макрос получает число num и записывает в поле Num_str его строковое представление
+				NumToStr MACRO num ;поле должно быть размером двойное слово
+				    local positive
+				    local myEnd
+				    local cycle2
+				    local pos
+				    mov edi, offset Num_str 
+				    mov ebx, num
+				    mov ecx, 15
+				    cmp num, 0
+				    jge positive ;если число отрицательное, первым в строку запишется "-"
+				        mov al, "-"
+				        stosb
+				        neg ebx
+				    positive:
+				        xor edx, edx
+				        mov eax, ebx
+
+				        mov ebx, 10
+				        div ebx    ;Деление на 10
+				        add edx, 48  ;К остатку прибавить 48, остаток точно меньше 10
+				        mov ebx, eax  ;Сохрaнить целую часть
+				        mov ax, dx
+				        push ax     ;Соханить цифру в стек
+				        cmp bx, 0   ;Если целая часть - 0, выйти из цикла
+				        loopnz positive
+				    myEnd:
+				        mov eax, 15
+				        sub eax, ecx ; сколько цифр было получено
+				        cmp num, 0      ;был ли знак "-" в начале строки числа
+				        jge pos
+				        inc eax
+				        pos:
+				        mov ecx, eax
+				        mov edx, eax; Нужно сохранить колличество цифр 
+				        cycle2:
+				            pop ax
+				            stosb
+				        loop cycle2
+				        mov esi, offset end_of_str ;Добавить символы окончания строки
+				        mov edi, offset Num_str
+				        add edi, edx
+				        mov ecx, 3
+				        rep movsw
+				ENDM
+				;3x - 5
+				;3x + 12
+				;3x
+				Func MACRO arg:=<0> ;Аргумент должен быть байтом\константой
+				    push eax
+				    push ebx
+				    push edx
+				    mov eax, ValueX  ;;Значение Х для вычислений берется из поля ValueX и туда же записывается результат
+				    mov ebx, 3
+				    imul ebx     ;x*3
+				    IF arg NE 0;;если аргумент не 0, значит сложение нужно, и макрорасширение будет генерироваться
+				        ;ПРОБЛЕМА 2
+				        push arg
+				        movsx ebx, byte ptr [esp]
+				        add esp, 4
+				        add eax, ebx  ;x*3 + n
+				    ENDIF
+				    mov ValueX, eax
+				    pop edx
+				    pop ebx
+				    pop eax
+				ENDM
+ 00000000			.const
+ 00000000 50 72 65 73 73	    exitStr db 'Press someting to exit', 10, 13, 0
+	   20 73 6F 6D 65
+	   74 69 6E 67 20
+	   74 6F 20 65 78
+	   69 74 0A 0D 00
+ 00000019 7A 65 72 6F 20	    infoStr db  'zero X:', 10, 13, 0
+	   58 3A 0A 0D 00
+ 00000023 52 65 73 75 6C	    infoResult  db  'Result', 10, 13, 0
+	   74 0A 0D 00
+ 0000002C 45 6E 74 65 72	    inputInfo   db  'Enter num (-9 to 9)'
+	   20 6E 75 6D 20
+	   28 2D 39 20 74
+	   6F 20 39 29
+ 00000000			.data 
+ 00000000 0658AA42		    FuncLogicScale  dd  00000110010110001010101001000010b       ;логическая шкала хранит порядок выолнение функций
+				                                                                ; функции 00, 01, 10
+ 00000004  00000005 [		    temp db 5 dup (?)
+	    00
+	   ]
+ 00000009 00000002		    ValueX   dd  2      ; Значение Х, используется в макросе функций 
+ 0000000D  0000000F [		    Num_str   db  15 dup ('?');Хранение числа как строки, используется макросом NumToStr
+	    3F
+	   ]
+ 0000001C 0A 0D 00		    end_of_str  db  10, 13, 0
+ 00000000			.code
+ 00000000			    start:
+
+				    invoke StdOut, offset inputInfo
+
+				    invoke StdIn, offset temp, 5
+				    ;ПРОБЛЕМА 1
+ 00000016  80 3D 00000004 R	    cmp temp, '-' ;если введено отрицательное число
+	   2D
+ 0000001D  75 0B		    jne pos
+ 0000001F  A0 00000005 R	    mov al, temp + 1
+ 00000024  2C 30		    sub al, 48
+ 00000026  F6 D8		    neg al
+ 00000028  EB 07		    jmp go
+ 0000002A			    pos:
+ 0000002A  A0 00000004 R	    mov al, temp
+ 0000002F  2C 30		    sub al, 48
+ 00000031			    go:
+ 00000031  66| 98		    cbw
+ 00000033  98			    cwde
+ 00000034  A3 00000009 R	    mov ValueX, eax
+
+
+				    invoke StdOut, offset infoStr
+				    NumToStr ValueX
+ 00000043  BF 0000000D R     1	    mov edi, offset Num_str 
+ 00000048  8B 1D 00000009 R  1	    mov ebx, ValueX
+ 0000004E  B9 0000000F	     1	    mov ecx, 15
+ 00000053  83 3D 00000009 R  1	    cmp ValueX, 0
+	   00
+ 0000005A  7D 05	     1	    jge ??0000 ;если число отрицательное, первым в строку запишется "-"
+ 0000005C  B0 2D	     1	        mov al, "-"
+ 0000005E  AA		     1	        stosb
+ 0000005F  F7 DB	     1	        neg ebx
+ 00000061		     1	    ??0000:
+ 00000061  33 D2	     1	        xor edx, edx
+ 00000063  8B C3	     1	        mov eax, ebx
+ 00000065  BB 0000000A	     1	        mov ebx, 10
+ 0000006A  F7 F3	     1	        div ebx    ;Деление на 10
+ 0000006C  83 C2 30	     1	        add edx, 48  ;К остатку прибавить 48, остаток точно меньше 10
+ 0000006F  8B D8	     1	        mov ebx, eax  ;Сохрaнить целую часть
+ 00000071  66| 8B C2	     1	        mov ax, dx
+ 00000074  66| 50	     1	        push ax     ;Соханить цифру в стек
+ 00000076  66| 83 FB 00	     1	        cmp bx, 0   ;Если целая часть - 0, выйти из цикла
+ 0000007A  E0 E5	     1	        loopnz ??0000
+ 0000007C		     1	    ??0001:
+ 0000007C  B8 0000000F	     1	        mov eax, 15
+ 00000081  2B C1	     1	        sub eax, ecx ; сколько цифр было получено
+ 00000083  83 3D 00000009 R  1	        cmp ValueX, 0      ;был ли знак "-" в начале строки числа
+	   00
+ 0000008A  7D 01	     1	        jge ??0003
+ 0000008C  40		     1	        inc eax
+ 0000008D		     1	        ??0003:
+ 0000008D  8B C8	     1	        mov ecx, eax
+ 0000008F  8B D0	     1	        mov edx, eax; Нужно сохранить колличество цифр 
+ 00000091		     1	        ??0002:
+ 00000091  66| 58	     1	            pop ax
+ 00000093  AA		     1	            stosb
+ 00000094  E2 FB	     1	        loop ??0002
+ 00000096  BE 0000001C R     1	        mov esi, offset end_of_str ;Добавить символы окончания строки
+ 0000009B  BF 0000000D R     1	        mov edi, offset Num_str
+ 000000A0  03 FA	     1	        add edi, edx
+ 000000A2  B9 00000003	     1	        mov ecx, 3
+ 000000A7  F3/ 66| A5	     1	        rep movsw
+				    invoke StdOut, offset Num_str
+				    invoke StdOut, offset infoResult
+ 000000BE  B9 00000010		    mov ecx, 16
+ 000000C3  A1 00000000 R	    mov     eax, FuncLogicScale
+				    ;ПРОБЛЕМА 3
+ 000000C8			    cycle:
+ 000000C8  33 DB		        xor     ebx, ebx
+ 000000CA  0F A4 C3 02		        shld    ebx, eax, 2        ;сдвинуть старшие 2 бита шкалы в ebx
+ 000000CE  C1 E0 02		        shl     eax, 2              ;сдвинуть шкалу на 2 бита влево для доступа к следующим
+ 000000D1  80 FB 00		        cmp     bl, 00b             ;если 00 - 1я функция, и так далее
+ 000000D4  74 0A		        je func1
+ 000000D6  80 FB 01		        cmp     bl, 01b
+ 000000D9  74 29		        je  func2
+ 000000DB  80 FB 02		        cmp     bl, 10b
+ 000000DE  74 48		        je  func3
+ 000000E0			        func1:
+				            Func <-5>
+ 000000E0  50		     1	    push eax
+ 000000E1  53		     1	    push ebx
+ 000000E2  52		     1	    push edx
+ 000000E3  A1 00000009 R     1	    mov eax, ValueX  
+ 000000E8  BB 00000003	     1	    mov ebx, 3
+ 000000ED  F7 EB	     1	    imul ebx     
+ 000000EF  6A FB	     1	        push -5
+ 000000F1  0F BE 1C 24	     1	        movsx ebx, byte ptr [esp]
+ 000000F5  83 C4 04	     1	        add esp, 4
+ 000000F8  03 C3	     1	        add eax, ebx  
+ 000000FA  A3 00000009 R     1	    mov ValueX, eax
+ 000000FF  5A		     1	    pop edx
+ 00000100  5B		     1	    pop ebx
+ 00000101  58		     1	    pop eax
+ 00000102  EB 3B		            jmp endfuncs
+ 00000104			        func2:
+				            Func <12>
+ 00000104  50		     1	    push eax
+ 00000105  53		     1	    push ebx
+ 00000106  52		     1	    push edx
+ 00000107  A1 00000009 R     1	    mov eax, ValueX  
+ 0000010C  BB 00000003	     1	    mov ebx, 3
+ 00000111  F7 EB	     1	    imul ebx     
+ 00000113  6A 0C	     1	        push 12
+ 00000115  0F BE 1C 24	     1	        movsx ebx, byte ptr [esp]
+ 00000119  83 C4 04	     1	        add esp, 4
+ 0000011C  03 C3	     1	        add eax, ebx  
+ 0000011E  A3 00000009 R     1	    mov ValueX, eax
+ 00000123  5A		     1	    pop edx
+ 00000124  5B		     1	    pop ebx
+ 00000125  58		     1	    pop eax
+ 00000126  EB 17		            jmp endfuncs
+ 00000128			        func3:
+				            Func
+ 00000128  50		     1	    push eax
+ 00000129  53		     1	    push ebx
+ 0000012A  52		     1	    push edx
+ 0000012B  A1 00000009 R     1	    mov eax, ValueX  
+ 00000130  BB 00000003	     1	    mov ebx, 3
+ 00000135  F7 EB	     1	    imul ebx     
+ 00000137  A3 00000009 R     1	    mov ValueX, eax
+ 0000013C  5A		     1	    pop edx
+ 0000013D  5B		     1	    pop ebx
+ 0000013E  58		     1	    pop eax
+ 0000013F			endfuncs:
+ 0000013F  E2 87		    loop cycle
+
+				    NumToStr ValueX
+ 00000141  BF 0000000D R     1	    mov edi, offset Num_str 
+ 00000146  8B 1D 00000009 R  1	    mov ebx, ValueX
+ 0000014C  B9 0000000F	     1	    mov ecx, 15
+ 00000151  83 3D 00000009 R  1	    cmp ValueX, 0
+	   00
+ 00000158  7D 05	     1	    jge ??0004 ;если число отрицательное, первым в строку запишется "-"
+ 0000015A  B0 2D	     1	        mov al, "-"
+ 0000015C  AA		     1	        stosb
+ 0000015D  F7 DB	     1	        neg ebx
+ 0000015F		     1	    ??0004:
+ 0000015F  33 D2	     1	        xor edx, edx
+ 00000161  8B C3	     1	        mov eax, ebx
+ 00000163  BB 0000000A	     1	        mov ebx, 10
+ 00000168  F7 F3	     1	        div ebx    ;Деление на 10
+ 0000016A  83 C2 30	     1	        add edx, 48  ;К остатку прибавить 48, остаток точно меньше 10
+ 0000016D  8B D8	     1	        mov ebx, eax  ;Сохрaнить целую часть
+ 0000016F  66| 8B C2	     1	        mov ax, dx
+ 00000172  66| 50	     1	        push ax     ;Соханить цифру в стек
+ 00000174  66| 83 FB 00	     1	        cmp bx, 0   ;Если целая часть - 0, выйти из цикла
+ 00000178  E0 E5	     1	        loopnz ??0004
+ 0000017A		     1	    ??0005:
+ 0000017A  B8 0000000F	     1	        mov eax, 15
+ 0000017F  2B C1	     1	        sub eax, ecx ; сколько цифр было получено
+ 00000181  83 3D 00000009 R  1	        cmp ValueX, 0      ;был ли знак "-" в начале строки числа
+	   00
+ 00000188  7D 01	     1	        jge ??0007
+ 0000018A  40		     1	        inc eax
+ 0000018B		     1	        ??0007:
+ 0000018B  8B C8	     1	        mov ecx, eax
+ 0000018D  8B D0	     1	        mov edx, eax; Нужно сохранить колличество цифр 
+ 0000018F		     1	        ??0006:
+ 0000018F  66| 58	     1	            pop ax
+ 00000191  AA		     1	            stosb
+ 00000192  E2 FB	     1	        loop ??0006
+ 00000194  BE 0000001C R     1	        mov esi, offset end_of_str ;Добавить символы окончания строки
+ 00000199  BF 0000000D R     1	        mov edi, offset Num_str
+ 0000019E  03 FA	     1	        add edi, edx
+ 000001A0  B9 00000003	     1	        mov ecx, 3
+ 000001A5  F3/ 66| A5	     1	        rep movsw
+				    invoke StdOut, offset Num_str
+
+				    invoke StdOut, offset exitStr
+				    invoke StdIn, offset Num_str, 128
+
+				end start
+Microsoft (R) Macro Assembler Version 6.15.8803		    05/20/20 11:24:17
+Lab2.asm						     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+Func . . . . . . . . . . . . . .	Proc
+MakeIP . . . . . . . . . . . . .	Func
+NumToStr . . . . . . . . . . . .	Proc
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+CONST  . . . . . . . . . . . . .	32 Bit	 0000003F DWord	  Public  'CONST'	 ReadOnly
+FLAT . . . . . . . . . . . . . .	GROUP
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000001F DWord	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000001CB DWord	  Public  'CODE'	
+
+
+Procedures,  parameters and locals:
+
+                N a m e                 Type     Value    Attr
+
+AboutBox . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+AddAtomA . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+AddAtomW . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+AllocConsole . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+AllocateUserPhysicalPages  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Alloc  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+AreFileApisANSI  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ArgClC . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ArgCl  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+AsciiDump  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+AssignProcessToJobObject . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BMBinSearch  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BMHBinsearch . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BackupRead . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BackupSeek . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BackupWrite  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Beep . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BeginUpdateResourceA . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BeginUpdateResourceW . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BinSearch  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BindIoCompletionCallback . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BitmapFromFile . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BitmapFromMemory . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BitmapFromResource . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BmpButton  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BrowseForFolder  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BuildCommDCBAndTimeoutsA . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BuildCommDCBAndTimeoutsW . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BuildCommDCBA  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+BuildCommDCBW  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CallNamedPipeA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CallNamedPipeW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CancelDeviceWakeupRequest  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CancelIo . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CancelTimerQueueTimer  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CancelWaitableTimer  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ChangeTimerQueueTimer  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ClearCommBreak . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ClearCommError . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ClearScreen  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CloseHandle  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CloseMMF . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ColorDialog  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CombSortA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CombSortD  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CommConfigDialogA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CommConfigDialogW  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CompareFileTime  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CompareStringA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CompareStringW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ConnectNamedPipe . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ContinueDebugEvent . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ConvertDefaultLocale . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ConvertThreadToFiber . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CopyFileA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CopyFileExA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CopyFileExW  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CopyFileW  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateConsoleScreenBuffer  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateDirectoryA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateDirectoryExA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateDirectoryExW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateDirectoryW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateEventA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateEventW . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateFiber  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateFileA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateFileMappingA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateFileMappingW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateFileW  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateHardLinkA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateHardLinkW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateIoCompletionPort . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateJobObjectA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateJobObjectW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateMMF  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateMailslotA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateMailslotW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateMutexA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateMutexW . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateNamedPipeA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateNamedPipeW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreatePipe . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateProcessA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateProcessW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateRemoteThread . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateSemaphoreA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateSemaphoreW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateTapePartition  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateThread . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateTimerQueueTimer  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateTimerQueue . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateToolhelp32Snapshot . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateWaitableTimerA . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+CreateWaitableTimerW . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DebugActiveProcess . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DebugBreak . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DefineDosDeviceA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DefineDosDeviceW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeleteAtom . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeleteCriticalSection  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeleteFiber  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeleteFileA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeleteFileW  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeleteTimerQueueEx . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeleteTimerQueueTimer  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeleteTimerQueue . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeleteVolumeMountPointA  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeleteVolumeMountPointW  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DeviceIoControl  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DisableThreadLibraryCalls  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DisconnectNamedPipe  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DisplayBmp . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DisplayIcon  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DnsHostnameToComputerNameA . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DnsHostnameToComputerNameW . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DosDateTimeToFileTime  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DuplicateHandle  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EndUpdateResourceA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EndUpdateResourceW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnterCriticalSection . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumCalendarInfoA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumCalendarInfoExA  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumCalendarInfoExW  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumCalendarInfoW  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumDateFormatsA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumDateFormatsExA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumDateFormatsExW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumDateFormatsW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumLanguageGroupLocalesA  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumLanguageGroupLocalesW  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumResourceLanguagesA . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumResourceLanguagesW . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumResourceNamesA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumResourceNamesW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumResourceTypesA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumResourceTypesW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumSystemCodePagesA . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumSystemCodePagesW . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumSystemLanguageGroupsA  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumSystemLanguageGroupsW  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumSystemLocalesA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumSystemLocalesW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumTimeFormatsA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumTimeFormatsW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumUILanguagesA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EnumUILanguagesW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EraseTape  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+EscapeCommFunction . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ExitProcess  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ExitThread . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ExpandEnvironmentStringsA  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ExpandEnvironmentStringsW  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FatalAppExitA  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FatalAppExitW  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FatalExit  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FileTimeToDosDateTime  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FileTimeToLocalFileTime  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FileTimeToSystemTime . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FillConsoleOutputAttribute . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FillConsoleOutputCharacterA  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FillConsoleOutputCharacterW  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindAtomA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindAtomW  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindCloseChangeNotification  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindClose  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindFirstChangeNotificationA . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindFirstChangeNotificationW . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindFirstFileA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindFirstFileExA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindFirstFileExW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindFirstFileW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindFirstVolumeA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindFirstVolumeMountPointA . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindFirstVolumeMountPointW . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindFirstVolumeW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindNextChangeNotification . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindNextFileA  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindNextFileW  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindNextVolumeA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindNextVolumeMountPointA  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindNextVolumeMountPointW  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindNextVolumeW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindResourceA  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindResourceExA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindResourceExW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindResourceW  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindVolumeClose  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FindVolumeMountPointClose  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FloatToStr2  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FloatToStr . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FlushConsoleInputBuffer  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FlushFileBuffers . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FlushInstructionCache  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FlushViewOfFile  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FoldStringA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FoldStringW  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FontDialog . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FormatMessageA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FormatMessageW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Frame3D  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FrameCtrl  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FrameGrp . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FrameWindow  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FreeConsole  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FreeEnvironmentStringsA  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FreeEnvironmentStringsW  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FreeLibraryAndExitThread . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FreeLibrary  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FreeResource . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+FreeUserPhysicalPages  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Free . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GenerateConsoleCtrlEvent . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetACP . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetAppPath . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetAtomNameA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetAtomNameW . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetBinaryTypeA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetBinaryTypeW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCL  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCPInfoExA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCPInfoExW . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCPInfo  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCalendarInfoA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCalendarInfoW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCommConfig  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCommMask  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCommModemStatus . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCommProperties  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCommState . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCommTimeouts  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCommandLineA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCommandLineW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCompressedFileSizeA . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCompressedFileSizeW . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetComputerNameA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetComputerNameExA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetComputerNameExW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetComputerNameW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleCP . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleOutputCP . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleScreenBufferInfo . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleTitleA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetConsoleTitleW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCurrencyFormatA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCurrencyFormatW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCurrentDirectoryA . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCurrentDirectoryW . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCurrentProcessId  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCurrentProcess  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCurrentThreadId . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetCurrentThread . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDateFormatA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDateFormatW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDefaultCommConfigA  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDefaultCommConfigW  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDevicePowerState  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDiskFreeSpaceA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDiskFreeSpaceExA  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDiskFreeSpaceExW  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDiskFreeSpaceW  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDriveTypeA  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetDriveTypeW  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetEnvironmentStringsA . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetEnvironmentStringsW . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetEnvironmentVariableA  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetEnvironmentVariableW  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetErrDescription  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetExitCodeProcess . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetExitCodeThread  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFileAttributesA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFileAttributesExA . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFileAttributesExW . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFileAttributesW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFileInformationByHandle . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFileSizeEx  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFileSize  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFileTime  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFileType  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFile  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFullPathNameA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetFullPathNameW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetHandleInformation . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetIP  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLargestConsoleWindowSize  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLastError . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLocalTime . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLocaleInfoA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLocaleInfoW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLogicalDriveStringsA  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLogicalDriveStringsW  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLogicalDrives . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLongPathNameA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetLongPathNameW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetMailslotInfo  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetModuleFileNameA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetModuleFileNameW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetModuleHandleA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetModuleHandleW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetNamedPipeHandleStateA . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetNamedPipeHandleStateW . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetNamedPipeInfo . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetNumberFormatA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetNumberFormatW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetNumberOfConsoleInputEvents  .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetNumberOfConsoleMouseButtons .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetOEMCP . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetOverlappedResult  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPathOnly  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPercent . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPriorityClass . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPrivateProfileIntA  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPrivateProfileIntW  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPrivateProfileSectionA  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPrivateProfileSectionNamesA .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPrivateProfileSectionNamesW .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPrivateProfileSectionW  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPrivateProfileStringA . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPrivateProfileStringW . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPrivateProfileStructA . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetPrivateProfileStructW . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcAddress . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcessAffinityMask . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcessHeaps  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcessHeap . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcessIoCounters . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcessPriorityBoost  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcessShutdownParameters . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcessTimes  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcessVersion  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProcessWorkingSetSize . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProfileIntA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProfileIntW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProfileSectionA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProfileSectionW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProfileStringA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetProfileStringW  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetQueuedCompletionStatus  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetShortPathNameA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetShortPathNameW  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetStartupInfoA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetStartupInfoW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetStdHandle . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetStringTypeA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetStringTypeExA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetStringTypeExW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetStringTypeW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemDefaultLCID . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemDefaultLangID . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemDefaultUILanguage . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemDirectoryA  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemDirectoryW  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemInfo  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemPowerStatus . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemTimeAdjustment  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemTimeAsFileTime  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemTime  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemWindowsDirectoryA . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetSystemWindowsDirectoryW . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTapeParameters  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTapePosition  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTapeStatus  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTempFileNameA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTempFileNameW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTempPathA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTempPathW . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTextInput . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetThreadContext . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetThreadLocale  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetThreadPriorityBoost . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetThreadPriority  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetThreadSelectorEntry . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetThreadTimes . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTickCount . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTimeFormatA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTimeFormatW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetTimeZoneInformation . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetUserDefaultLCID . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetUserDefaultLangID . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetUserDefaultUILanguage . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetVersionExA  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetVersionExW  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetVersion . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetVolumeInformationA  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetVolumeInformationW  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetVolumeNameForVolumeMountPointA 	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetVolumeNameForVolumeMountPointW 	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetVolumePathNameA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetVolumePathNameW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetWindowsDirectoryA . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetWindowsDirectoryW . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GetWriteWatch  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalAddAtomA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalAddAtomW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalAlloc  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalCompact  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalDeleteAtom . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalFindAtomA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalFindAtomW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalFix  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalFlags  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalFree . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalGetAtomNameA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalGetAtomNameW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalHandle . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalLock . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalMemoryStatusEx . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalMemoryStatus . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalReAlloc  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalSize . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalUnWire . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalUnfix  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalUnlock . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GlobalWire . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Heap32First  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Heap32ListFirst  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Heap32ListNext . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Heap32Next . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapAlloc  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapCompact  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapCreate . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapDestroy  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapFree . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapLock . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapReAlloc  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapSize . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapUnlock . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapValidate . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HeapWalk . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+HexDump  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IPtoString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+InString . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+InitAtomTable  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+InitializeCriticalSectionAndSpinCount 	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+InitializeCriticalSection  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IntDiv . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IntMul . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IntSqrt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+InterlockedCompareExchange . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+InterlockedDecrement . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+InterlockedExchangeAdd . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+InterlockedExchange  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+InterlockedIncrement . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsBadCodePtr . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsBadHugeReadPtr . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsBadHugeWritePtr  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsBadReadPtr . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsBadStringPtrA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsBadStringPtrW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsBadWritePtr  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsDBCSLeadByteEx . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsDBCSLeadByte . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsDebuggerPresent  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsProcessorFeaturePresent  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsSystemResumeAutomatic  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsValidCodePage  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsValidLanguageGroup . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+IsValidLocale  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LCMapStringA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LCMapStringW . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LeaveCriticalSection . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LoadLibraryA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LoadLibraryExA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LoadLibraryExW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LoadLibraryW . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LoadList . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LoadModule . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LoadResource . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalAlloc . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalCompact . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalFileTimeToFileTime  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalFlags . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalFree  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalHandle  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalLock  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalReAlloc . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalShrink  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalSize  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LocalUnlock  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LockFileEx . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LockFile . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LockResource . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MapUserPhysicalPagesScatter  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MapUserPhysicalPages . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MapViewOfFileEx  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MapViewOfFile  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MemCopy  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Module32FirstW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Module32First  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Module32NextW  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Module32Next . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MoveFileA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MoveFileExA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MoveFileExW  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MoveFileWithProgressA  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MoveFileWithProgressW  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MoveFileW  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MulDiv . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+MultiByteToWideChar  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+NameFromPath . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenEventA . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenEventW . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenFileDialog . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenFileMappingA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenFileMappingW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenFile . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenJobObjectA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenJobObjectW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenMutexA . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenMutexW . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenProcess  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenSemaphoreA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenSemaphoreW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenThread . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenWaitableTimerA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OpenWaitableTimerW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OutputDebugStringA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+OutputDebugStringW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PageSetupDialog  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PeekConsoleInputA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PeekConsoleInputW  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PeekNamedPipe  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PostQueuedCompletionStatus . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PrepareTape  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PrintDialog  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Process32FirstW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Process32First . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Process32NextW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Process32Next  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ProcessIdToSessionId . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PulseEvent . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+PurgeComm  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+QueryDosDeviceA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+QueryDosDeviceW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+QueryInformationJobObject  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+QueryPerformanceCounter  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+QueryPerformanceFrequency  . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+QueueUserAPC . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+QueueUserWorkItem  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RaiseException . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleInputA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleInputW  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleOutputAttribute . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleOutputA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleOutputCharacterA  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleOutputCharacterW  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleOutputW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadConsoleW . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadDirectoryChangesW  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadFileEx . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadFileScatter  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadFile . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadProcessMemory  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Read_File_In . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RegisterWaitForSingleObjectEx  .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RegisterWaitForSingleObject  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReleaseMutex . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReleaseSemaphore . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RemoveDirectoryA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RemoveDirectoryW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReplaceFileA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReplaceFileW . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RequestDeviceWakeup  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RequestWakeupLatency . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ResetEvent . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ResetWriteWatch  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ResumeThread . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RichEd1  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RichEd2  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RolData  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RorData  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RtlFillMemory  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RtlMoveMemory  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RtlUnwind  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+RtlZeroMemory  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SBMBinSearch . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SaveFileDialog . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ScrollConsoleScreenBufferA . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ScrollConsoleScreenBufferW . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SearchPathA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SearchPathW  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetBMcolor . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetCalendarInfoA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetCalendarInfoW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetCommBreak . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetCommConfig  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetCommMask  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetCommState . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetCommTimeouts  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetComputerNameA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetComputerNameExA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetComputerNameExW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetComputerNameW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleActiveScreenBuffer . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleCP . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleCtrlHandler  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleCursor . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleOutputCP . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleScreenBufferSize . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleTextAttribute  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleTitleA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleTitleW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetConsoleWindowInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetCriticalSectionSpinCount  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetCurrentDirectoryA . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetCurrentDirectoryW . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetDefaultCommConfigA  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetDefaultCommConfigW  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetEndOfFile . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetEnvironmentVariableA  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetEnvironmentVariableW  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetErrorMode . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetEvent . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetFileApisToANSI  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetFileApisToOEM . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetFileAttributesA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetFileAttributesW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetFilePointerEx . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetFilePointer . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetFileTime  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetHandleCount . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetHandleInformation . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetInformationJobObject  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetLastError . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetLocalTime . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetLocaleInfoA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetLocaleInfoW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetMailslotInfo  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetMessageWaitingIndicator . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetNamedPipeHandleState  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetPriorityClass . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetProcessAffinityMask . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetProcessPriorityBoost  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetProcessShutdownParameters . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetProcessWorkingSetSize . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetStdHandle . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetSystemPowerState  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetSystemTimeAdjustment  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetSystemTime  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetTapeParameters  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetTapePosition  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetThreadAffinityMask  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetThreadContext . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetThreadExecutionState  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetThreadIdealProcessor  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetThreadLocale  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetThreadPriorityBoost . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetThreadPriority  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetTimeZoneInformation . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetTimerQueueTimer . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetUnhandledExceptionFilter  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetVolumeLabelA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetVolumeLabelW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetVolumeMountPointA . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetVolumeMountPointW . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetWaitableTimer . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetupComm  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SignalObjectAndWait  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SizeofResource . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SleepEx  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Sleep  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+StdIn  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+StdOut . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+StrLen . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+StrToFloat . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+StripLF  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+StripRangeI  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+StripRangeX  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SuspendThread  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SwitchToFiber  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SwitchToThread . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SystemTimeToFileTime . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SystemTimeToTzSpecificLocalTime 	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+TerminateJobObject . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+TerminateProcess . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+TerminateThread  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Thread32First  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Thread32Next . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+TlsAlloc . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+TlsFree  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+TlsGetValue  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+TlsSetValue  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Toolhelp32ReadProcessMemory  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+TransactNamedPipe  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+TransmitCommChar . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+TryEnterCriticalSection  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+UnhandledExceptionFilter . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+UnlockFileEx . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+UnlockFile . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+UnmapViewOfFile  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+UnregisterWaitEx . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+UnregisterWait . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+UpdateResourceA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+UpdateResourceW  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VerLanguageNameA . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VerLanguageNameW . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VerSetConditionMask  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VerifyVersionInfoA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VerifyVersionInfoW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VerticalTile . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VirtualAllocEx . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VirtualAlloc . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VirtualFreeEx  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VirtualFree  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VirtualLock  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VirtualProtectEx . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VirtualProtect . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VirtualQueryEx . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VirtualQuery . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+VirtualUnlock  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WaitCommEvent  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WaitForDebugEvent  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WaitForMultipleObjectsEx . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WaitForMultipleObjects . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WaitForSingleObjectEx  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WaitForSingleObject  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WaitNamedPipeA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WaitNamedPipeW . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WideCharToMultiByte  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WinExec  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WordCount  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleA  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleInputA . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleInputW . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleOutputAttribute  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleOutputA  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleOutputCharacterA . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleOutputCharacterW . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleOutputW  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteConsoleW  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteFileEx  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteFileGather  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteFile  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WritePrivateProfileSectionA  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WritePrivateProfileSectionW  . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WritePrivateProfileStringA . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WritePrivateProfileStringW . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WritePrivateProfileStructA . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WritePrivateProfileStructW . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteProcessMemory . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteProfileSectionA . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteProfileSectionW . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteProfileStringA  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteProfileStringW  . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+WriteTapemark  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+Write_To_Disk  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+XorData  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+_hread . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+_hwrite  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+_lclose  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+_lcreat  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+_llseek  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+_lopen . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+_lread . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+_lwrite  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+a2dw . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+a2wc . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+arr_add  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+arr_mul  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+arr_sub  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+atodw  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+atol . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+byte_count . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+circle . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+create_array . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+dw2ah  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+dw2a . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+dw2hex . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+dwtoa  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+exist  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+filesize . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+htodw  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+line . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+load_drives  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+locate . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrcatA . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrcatW . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrcmpA . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrcmpW . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrcmpiA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrcmpiW  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrcpyA . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrcpyW . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrcpynA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrcpynW  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrlenA . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+lstrlenW . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ltoa . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+memfill  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+nrQsortA . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+nrQsortD . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+nrandom  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+nseed  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ofCallBack . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+read_disk_file . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+sfCallBack . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+shell  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szCatStr . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szCmpi . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szCmp  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szCopy . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szLeft . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szLen  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szLower  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szLtrim  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szMid  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szMultiCat . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
+szRemove . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szRev  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szRight  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szRtrim  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szTrim . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szUpper  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+szappend . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+testreg  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+udw2str  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ustr2dw  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+write_disk_file  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+??0000 . . . . . . . . . . . . .	L Near	 00000061 _TEXT	
+??0001 . . . . . . . . . . . . .	L Near	 0000007C _TEXT	
+??0002 . . . . . . . . . . . . .	L Near	 00000091 _TEXT	
+??0003 . . . . . . . . . . . . .	L Near	 0000008D _TEXT	
+??0004 . . . . . . . . . . . . .	L Near	 0000015F _TEXT	
+??0005 . . . . . . . . . . . . .	L Near	 0000017A _TEXT	
+??0006 . . . . . . . . . . . . .	L Near	 0000018F _TEXT	
+??0007 . . . . . . . . . . . . .	L Near	 0000018B _TEXT	
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000003h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+AddAtom  . . . . . . . . . . . .	Text   	 AddAtomA
+BeginUpdateResource  . . . . . .	Text   	 BeginUpdateResourceA
+BuildCommDCBAndTimeouts  . . . .	Text   	 BuildCommDCBAndTimeoutsA
+BuildCommDCB . . . . . . . . . .	Text   	 BuildCommDCBA
+CallNamedPipe  . . . . . . . . .	Text   	 CallNamedPipeA
+CommConfigDialog . . . . . . . .	Text   	 CommConfigDialogA
+CompareString  . . . . . . . . .	Text   	 CompareStringA
+CopyFileEx . . . . . . . . . . .	Text   	 CopyFileExA
+CopyFile . . . . . . . . . . . .	Text   	 CopyFileA
+CreateDirectoryEx  . . . . . . .	Text   	 CreateDirectoryExA
+CreateDirectory  . . . . . . . .	Text   	 CreateDirectoryA
+CreateEvent  . . . . . . . . . .	Text   	 CreateEventA
+CreateFileMapping  . . . . . . .	Text   	 CreateFileMappingA
+CreateFile . . . . . . . . . . .	Text   	 CreateFileA
+CreateHardLink . . . . . . . . .	Text   	 CreateHardLinkA
+CreateJobObject  . . . . . . . .	Text   	 CreateJobObjectA
+CreateMailslot . . . . . . . . .	Text   	 CreateMailslotA
+CreateMutex  . . . . . . . . . .	Text   	 CreateMutexA
+CreateNamedPipe  . . . . . . . .	Text   	 CreateNamedPipeA
+CreateProcess  . . . . . . . . .	Text   	 CreateProcessA
+CreateSemaphore  . . . . . . . .	Text   	 CreateSemaphoreA
+CreateWaitableTimer  . . . . . .	Text   	 CreateWaitableTimerA
+DefineDosDevice  . . . . . . . .	Text   	 DefineDosDeviceA
+DeleteFile . . . . . . . . . . .	Text   	 DeleteFileA
+DeleteVolumeMountPoint . . . . .	Text   	 DeleteVolumeMountPointA
+DnsHostnameToComputerName  . . .	Text   	 DnsHostnameToComputerNameA
+EndUpdateResource  . . . . . . .	Text   	 EndUpdateResourceA
+EnumCalendarInfoEx . . . . . . .	Text   	 EnumCalendarInfoExA
+EnumCalendarInfo . . . . . . . .	Text   	 EnumCalendarInfoA
+EnumDateFormatsEx  . . . . . . .	Text   	 EnumDateFormatsExA
+EnumDateFormats  . . . . . . . .	Text   	 EnumDateFormatsA
+EnumLanguageGroupLocales . . . .	Text   	 EnumLanguageGroupLocalesA
+EnumResourceLanguages  . . . . .	Text   	 EnumResourceLanguagesA
+EnumResourceNames  . . . . . . .	Text   	 EnumResourceNamesA
+EnumResourceTypes  . . . . . . .	Text   	 EnumResourceTypesA
+EnumSystemCodePages  . . . . . .	Text   	 EnumSystemCodePagesA
+EnumSystemLanguageGroups . . . .	Text   	 EnumSystemLanguageGroupsA
+EnumSystemLocales  . . . . . . .	Text   	 EnumSystemLocalesA
+EnumTimeFormats  . . . . . . . .	Text   	 EnumTimeFormatsA
+EnumUILanguages  . . . . . . . .	Text   	 EnumUILanguagesA
+ExpandEnvironmentStrings . . . .	Text   	 ExpandEnvironmentStringsA
+FatalAppExit . . . . . . . . . .	Text   	 FatalAppExitA
+FillConsoleOutputCharacter . . .	Text   	 FillConsoleOutputCharacterA
+FindAtom . . . . . . . . . . . .	Text   	 FindAtomA
+FindFirstChangeNotification  . .	Text   	 FindFirstChangeNotificationA
+FindFirstFileEx  . . . . . . . .	Text   	 FindFirstFileExA
+FindFirstFile  . . . . . . . . .	Text   	 FindFirstFileA
+FindFirstVolumeMountPoint  . . .	Text   	 FindFirstVolumeMountPointA
+FindFirstVolume  . . . . . . . .	Text   	 FindFirstVolumeA
+FindNextFile . . . . . . . . . .	Text   	 FindNextFileA
+FindNextVolumeMountPoint . . . .	Text   	 FindNextVolumeMountPointA
+FindNextVolume . . . . . . . . .	Text   	 FindNextVolumeA
+FindResourceEx . . . . . . . . .	Text   	 FindResourceExA
+FindResource . . . . . . . . . .	Text   	 FindResourceA
+FoldString . . . . . . . . . . .	Text   	 FoldStringA
+FormatMessage  . . . . . . . . .	Text   	 FormatMessageA
+FreeEnvironmentStrings . . . . .	Text   	 FreeEnvironmentStringsA
+FuncLogicScale . . . . . . . . .	DWord	 00000000 _DATA	
+GetAtomName  . . . . . . . . . .	Text   	 GetAtomNameA
+GetBinaryType  . . . . . . . . .	Text   	 GetBinaryTypeA
+GetCPInfoEx  . . . . . . . . . .	Text   	 GetCPInfoExA
+GetCalendarInfo  . . . . . . . .	Text   	 GetCalendarInfoA
+GetCommandLine . . . . . . . . .	Text   	 GetCommandLineA
+GetCompressedFileSize  . . . . .	Text   	 GetCompressedFileSizeA
+GetComputerNameEx  . . . . . . .	Text   	 GetComputerNameExA
+GetComputerName  . . . . . . . .	Text   	 GetComputerNameA
+GetConsoleTitle  . . . . . . . .	Text   	 GetConsoleTitleA
+GetCurrencyFormat  . . . . . . .	Text   	 GetCurrencyFormatA
+GetCurrentDirectory  . . . . . .	Text   	 GetCurrentDirectoryA
+GetDateFormat  . . . . . . . . .	Text   	 GetDateFormatA
+GetDefaultCommConfig . . . . . .	Text   	 GetDefaultCommConfigA
+GetDiskFreeSpaceEx . . . . . . .	Text   	 GetDiskFreeSpaceExA
+GetDiskFreeSpace . . . . . . . .	Text   	 GetDiskFreeSpaceA
+GetDriveType . . . . . . . . . .	Text   	 GetDriveTypeA
+GetEnvironmentStrings  . . . . .	Text   	 GetEnvironmentStringsA
+GetEnvironmentVariable . . . . .	Text   	 GetEnvironmentVariableA
+GetFileAttributesEx  . . . . . .	Text   	 GetFileAttributesExA
+GetFileAttributes  . . . . . . .	Text   	 GetFileAttributesA
+GetFullPathName  . . . . . . . .	Text   	 GetFullPathNameA
+GetLocaleInfo  . . . . . . . . .	Text   	 GetLocaleInfoA
+GetLogicalDriveStrings . . . . .	Text   	 GetLogicalDriveStringsA
+GetLongPathName  . . . . . . . .	Text   	 GetLongPathNameA
+GetModuleFileName  . . . . . . .	Text   	 GetModuleFileNameA
+GetModuleHandle  . . . . . . . .	Text   	 GetModuleHandleA
+GetNamedPipeHandleState  . . . .	Text   	 GetNamedPipeHandleStateA
+GetNumberFormat  . . . . . . . .	Text   	 GetNumberFormatA
+GetPrivateProfileInt . . . . . .	Text   	 GetPrivateProfileIntA
+GetPrivateProfileSectionNames  .	Text   	 GetPrivateProfileSectionNamesA
+GetPrivateProfileSection . . . .	Text   	 GetPrivateProfileSectionA
+GetPrivateProfileString  . . . .	Text   	 GetPrivateProfileStringA
+GetPrivateProfileStruct  . . . .	Text   	 GetPrivateProfileStructA
+GetProfileInt  . . . . . . . . .	Text   	 GetProfileIntA
+GetProfileSection  . . . . . . .	Text   	 GetProfileSectionA
+GetProfileString . . . . . . . .	Text   	 GetProfileStringA
+GetShortPathName . . . . . . . .	Text   	 GetShortPathNameA
+GetStartupInfo . . . . . . . . .	Text   	 GetStartupInfoA
+GetStringTypeEx  . . . . . . . .	Text   	 GetStringTypeExA
+GetStringType  . . . . . . . . .	Text   	 GetStringTypeA
+GetSystemDirectory . . . . . . .	Text   	 GetSystemDirectoryA
+GetSystemWindowsDirectory  . . .	Text   	 GetSystemWindowsDirectoryA
+GetTempFileName  . . . . . . . .	Text   	 GetTempFileNameA
+GetTempPath  . . . . . . . . . .	Text   	 GetTempPathA
+GetTimeFormat  . . . . . . . . .	Text   	 GetTimeFormatA
+GetVersionEx . . . . . . . . . .	Text   	 GetVersionExA
+GetVolumeInformation . . . . . .	Text   	 GetVolumeInformationA
+GetVolumeNameForVolumeMountPoint .	Text   	 GetVolumeNameForVolumeMountPointA
+GetVolumePathName  . . . . . . .	Text   	 GetVolumePathNameA
+GetWindowsDirectory  . . . . . .	Text   	 GetWindowsDirectoryA
+GlobalAddAtom  . . . . . . . . .	Text   	 GlobalAddAtomA
+GlobalFindAtom . . . . . . . . .	Text   	 GlobalFindAtomA
+GlobalGetAtomName  . . . . . . .	Text   	 GlobalGetAtomNameA
+IsBadStringPtr . . . . . . . . .	Text   	 IsBadStringPtrA
+LCMapString  . . . . . . . . . .	Text   	 LCMapStringA
+LoadLibraryEx  . . . . . . . . .	Text   	 LoadLibraryExA
+LoadLibrary  . . . . . . . . . .	Text   	 LoadLibraryA
+MoveFileEx . . . . . . . . . . .	Text   	 MoveFileExA
+MoveFileWithProgress . . . . . .	Text   	 MoveFileWithProgressA
+MoveFile . . . . . . . . . . . .	Text   	 MoveFileA
+Num_str  . . . . . . . . . . . .	Byte	 0000000D _DATA	
+OpenEvent  . . . . . . . . . . .	Text   	 OpenEventA
+OpenFileMapping  . . . . . . . .	Text   	 OpenFileMappingA
+OpenJobObject  . . . . . . . . .	Text   	 OpenJobObjectA
+OpenMutex  . . . . . . . . . . .	Text   	 OpenMutexA
+OpenSemaphore  . . . . . . . . .	Text   	 OpenSemaphoreA
+OpenWaitableTimer  . . . . . . .	Text   	 OpenWaitableTimerA
+OutputDebugString  . . . . . . .	Text   	 OutputDebugStringA
+PeekConsoleInput . . . . . . . .	Text   	 PeekConsoleInputA
+QueryDosDevice . . . . . . . . .	Text   	 QueryDosDeviceA
+ReadConsoleInput . . . . . . . .	Text   	 ReadConsoleInputA
+ReadConsoleOutputCharacter . . .	Text   	 ReadConsoleOutputCharacterA
+ReadConsoleOutput  . . . . . . .	Text   	 ReadConsoleOutputA
+ReadConsole  . . . . . . . . . .	Text   	 ReadConsoleA
+RemoveDirectory  . . . . . . . .	Text   	 RemoveDirectoryA
+ReplaceFile  . . . . . . . . . .	Text   	 ReplaceFileA
+ScrollConsoleScreenBuffer  . . .	Text   	 ScrollConsoleScreenBufferA
+SearchPath . . . . . . . . . . .	Text   	 SearchPathA
+SetCalendarInfo  . . . . . . . .	Text   	 SetCalendarInfoA
+SetComputerNameEx  . . . . . . .	Text   	 SetComputerNameExA
+SetComputerName  . . . . . . . .	Text   	 SetComputerNameA
+SetConsoleTitle  . . . . . . . .	Text   	 SetConsoleTitleA
+SetCurrentDirectory  . . . . . .	Text   	 SetCurrentDirectoryA
+SetDefaultCommConfig . . . . . .	Text   	 SetDefaultCommConfigA
+SetEnvironmentVariable . . . . .	Text   	 SetEnvironmentVariableA
+SetFileAttributes  . . . . . . .	Text   	 SetFileAttributesA
+SetLocaleInfo  . . . . . . . . .	Text   	 SetLocaleInfoA
+SetVolumeLabel . . . . . . . . .	Text   	 SetVolumeLabelA
+SetVolumeMountPoint  . . . . . .	Text   	 SetVolumeMountPointA
+UpdateResource . . . . . . . . .	Text   	 UpdateResourceA
+ValueX . . . . . . . . . . . . .	DWord	 00000009 _DATA	
+VerLanguageName  . . . . . . . .	Text   	 VerLanguageNameA
+VerifyVersionInfo  . . . . . . .	Text   	 VerifyVersionInfoA
+WaitNamedPipe  . . . . . . . . .	Text   	 WaitNamedPipeA
+WriteConsoleInput  . . . . . . .	Text   	 WriteConsoleInputA
+WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
+WriteConsoleOutput . . . . . . .	Text   	 WriteConsoleOutputA
+WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
+WritePrivateProfileSection . . .	Text   	 WritePrivateProfileSectionA
+WritePrivateProfileString  . . .	Text   	 WritePrivateProfileStringA
+WritePrivateProfileStruct  . . .	Text   	 WritePrivateProfileStructA
+WriteProfileSection  . . . . . .	Text   	 WriteProfileSectionA
+WriteProfileString . . . . . . .	Text   	 WriteProfileStringA
+cmpsi  . . . . . . . . . . . . .	Text   	 szCmpi
+cmpstr . . . . . . . . . . . . .	Text   	 szCmp
+cycle  . . . . . . . . . . . . .	L Near	 000000C8 _TEXT	
+end_of_str . . . . . . . . . . .	Byte	 0000001C _DATA	
+endfuncs . . . . . . . . . . . .	L Near	 0000013F _TEXT	
+exitStr  . . . . . . . . . . . .	Byte	 00000000 CONST	
+func1  . . . . . . . . . . . . .	L Near	 000000E0 _TEXT	
+func2  . . . . . . . . . . . . .	L Near	 00000104 _TEXT	
+func3  . . . . . . . . . . . . .	L Near	 00000128 _TEXT	
+go . . . . . . . . . . . . . . .	L Near	 00000031 _TEXT	
+infoResult . . . . . . . . . . .	Byte	 00000023 CONST	
+infoStr  . . . . . . . . . . . .	Byte	 00000019 CONST	
+inputInfo  . . . . . . . . . . .	Byte	 0000002C CONST	
+lcase  . . . . . . . . . . . . .	Text   	 szLower
+lnstr  . . . . . . . . . . . . .	Text   	 szLen
+lstrcat  . . . . . . . . . . . .	Text   	 lstrcatA
+lstrcmpi . . . . . . . . . . . .	Text   	 lstrcmpiA
+lstrcmp  . . . . . . . . . . . .	Text   	 lstrcmpA
+lstrcpyn . . . . . . . . . . . .	Text   	 lstrcpynA
+lstrcpy  . . . . . . . . . . . .	Text   	 lstrcpyA
+lstrlen  . . . . . . . . . . . .	Text   	 lstrlenA
+lstr . . . . . . . . . . . . . .	Text   	 szLeft
+ltrim  . . . . . . . . . . . . .	Text   	 szLtrim
+midstr . . . . . . . . . . . . .	Text   	 szMid
+pos  . . . . . . . . . . . . . .	L Near	 0000002A _TEXT	
+revstr . . . . . . . . . . . . .	Text   	 szRev
+rstr . . . . . . . . . . . . . .	Text   	 szRight
+rtrim  . . . . . . . . . . . . .	Text   	 szRtrim
+start  . . . . . . . . . . . . .	L Near	 00000000 _TEXT	Public STDCALL
+temp . . . . . . . . . . . . . .	Byte	 00000004 _DATA	
+trim . . . . . . . . . . . . . .	Text   	 szTrim
+ucase  . . . . . . . . . . . . .	Text   	 szUpper
+
+	   0 Warnings
+	   0 Errors
